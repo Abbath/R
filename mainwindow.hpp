@@ -61,7 +61,6 @@ private:
                 if(j < bottom-1 && i!=left) v.push_back(qGray(image.pixel(i-1,j+1)));
                 if(i < right-1 && j < bottom-1) v.push_back(qGray(image.pixel(i+1,j+1)));
                 int min = *(std::min_element(v.begin(),v.end()));
-                //qDebug() << min;
                 if(min < qGray(image.pixel(i,j))){
                     for( unsigned k = 0; k < p.c-min; ++k){
                         Point p0;
@@ -105,7 +104,7 @@ private:
     QImage image,pix;
     QVector<Point> points;
     bool rect,d3;
-    quint32 x1,y1,x2,y2;
+    quint32 x1,y1,x2,y2,cc;
     quint8 threshold;
     Point origin;
 };

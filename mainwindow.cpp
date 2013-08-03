@@ -4,20 +4,12 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow), image("4.bmp"), pix(image),
-    rect(false), d3(false), x1(0), y1(0), x2(0), y2(0), threshold(255)
+    rect(false), d3(false), x1(0), y1(0), x2(image.width()), y2(image.height()), threshold(255)
 {
     ui->setupUi(this);
-    //if(d3){
         convert();
         pix = QImage(1366,768,image.format());
-        origin.x = 0;
-        origin.y = 0;
-        origin.z = 0.0;
-        rotate(3.1415/180*35.2,0,0);
-        rotate(0,3.1415/4,0);
-        rotate(0,0,-3.1415/4);
-    //}
-    // rotate(0,0,3.1415/4);
+
 }
 
 void MainWindow::paintEvent(QPaintEvent *e)
@@ -26,10 +18,9 @@ void MainWindow::paintEvent(QPaintEvent *e)
     painter.setPen(Qt::green);
     QImage image = this->image;
     quint32 counter = 0 ;
-    if(rect){
         painter.drawImage(0,0,image);
-        for (unsigned  i = x1; i != x2; x1 < x2 ? ++i : --i ) {
-            for(unsigned j = y1; j != y2; y1 < y2 ? ++j : --j){
+        for (unsigned  i = x1+1; i != x2; x1 < x2 ? ++i : --i ) {
+            for(unsigned j = y1+1; j != y2; y1 < y2 ? ++j : --j){
                 if(image.pixel(i,j) >= tre()){
                     counter++;
                 }
@@ -41,16 +32,15 @@ void MainWindow::paintEvent(QPaintEvent *e)
                 }
             }
         }
-        painter.drawImage(0,0,image);
-    }else{
-        for (int i = 0; i < image.width(); ++i) {
-            for(int j = 0; j < image.height(); ++j){
-                if(image.pixel(i,j) >= qRgb(255,255,255)){
-                    counter++;
-                }
-            }
+        for(unsigned i = x1; i != (x1 < x2 ? x2+1 : x2-1); x1 < x2 ? ++i : --i){
+            if( image.pixel(i,y1) >= tre() ) image.setPixel(i,y1,0x00ff00);
+            if( image.pixel(i,y2) >= tre() ) image.setPixel(i,y2,0x00ff00);
         }
-    }
+        for(unsigned i = y1; i !=  (y1 < y2 ? y2+1 : y2-1); y1 < y2 ? ++i : --i){
+            if( image.pixel(x1,i) >= tre() ) image.setPixel(x1,i,0x00ff00);
+            if( image.pixel(x2,i) >= tre() ) image.setPixel(x2,i,0x00ff00);
+        }
+        painter.drawImage(0,0,image);
     if(d3){
         painter.setBrush(Qt::black);
         painter.drawRect(0,0,this->width(),this->height());
@@ -86,6 +76,10 @@ void MainWindow::mousePressEvent(QMouseEvent *e)
         rect = false;
         x1 = e->x();
         y1 = e->y();
+        if(e->x() < 0) x1 = 0;
+        if(e->y() < 0) y1 = 0;
+        if(e->x() > image.width()) x1 = image.width();
+        if(e->y() > image.height()) y1 = image.height();
     }
 }
 
@@ -94,7 +88,12 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *e)
     if(e->button() == Qt::RightButton){
         x2 = e->x();
         y2 = e->y();
+        if(e->x() < 0) x2 = 0;
+        if(e->y() < 0) y2 = 0;
+        if(e->x() > image.width()) x2 = image.width();
+        if(e->y() > image.height()) y2 = image.height();
         rect = true;
+        convert(x1,y1,x2,y2);
         repaint();
     }
 }
@@ -103,6 +102,10 @@ void MainWindow::mouseMoveEvent(QMouseEvent *e)
 {
     x2 = e->x();
     y2 = e->y();
+    if(e->x() < 0) x2 = 0;
+    if(e->y() < 0) y2 = 0;
+    if(e->x() > image.width()) x2 = image.width();
+    if(e->y() > image.height()) y2 = image.height();
     repaint();
 }
 

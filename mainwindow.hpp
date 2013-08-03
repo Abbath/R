@@ -27,23 +27,39 @@ private:
     struct Point{
         qreal x,y,z,c;
     };
-    void convert(){
-        for( int i = 0; i < image.width(); ++i){
-            for( int j = 0; j < image.height(); ++j){
+    void convert(int left = 0, int top = 0, int right = 720, int bottom = 480){
+        if(left < 0) left = 0;
+        if(top < 0) top = 0;
+        if(right > image.width()) right = image.width();
+        if(bottom > image.height()) bottom = image.height();
+        points.clear();
+        pix.fill(Qt::black);
+        if(left > right){
+            left ^= right;
+            right ^= left;
+            left ^= right;
+        }
+        if(top > bottom){
+            top ^= bottom;
+            bottom ^= top;
+            top ^= bottom;
+        }
+        for( int i = left; i < right; ++i){
+            for( int j = top; j < bottom; ++j){
                 Point p;
                 p.x = i;
                 p.y = j;
                 p.z = qGray(image.pixel(i,j));
                 p.c = p.z;
                 QVector<int> v;
-                if(i!=0) v.push_back(qGray(image.pixel(i-1,j)));
-                if(i < image.width()-1) v.push_back(qGray(image.pixel(i+1,j)));
-                if(j!=0) v.push_back(qGray(image.pixel(i,j-1)));
-                if(j < image.height()-1) v.push_back(qGray(image.pixel(i,j+1)));
-                if(i!=0 && j!= 0) v.push_back(qGray(image.pixel(i-1,j-1)));
-                if(i < image.width()-1 && j!=0) v.push_back(qGray(image.pixel(i+1,j-1)));
-                if(j < image.height()-1 && i!=0) v.push_back(qGray(image.pixel(i-1,j+1)));
-                if(i < image.width()-1 && j < image.height()-1) v.push_back(qGray(image.pixel(i+1,j+1)));
+                if(i!=left) v.push_back(qGray(image.pixel(i-1,j)));
+                if(i < right-1) v.push_back(qGray(image.pixel(i+1,j)));
+                if(j!=top) v.push_back(qGray(image.pixel(i,j-1)));
+                if(j < bottom-1) v.push_back(qGray(image.pixel(i,j+1)));
+                if(i!=left && j!= top) v.push_back(qGray(image.pixel(i-1,j-1)));
+                if(i < right-1 && j!=top) v.push_back(qGray(image.pixel(i+1,j-1)));
+                if(j < bottom-1 && i!=left) v.push_back(qGray(image.pixel(i-1,j+1)));
+                if(i < right-1 && j < bottom-1) v.push_back(qGray(image.pixel(i+1,j+1)));
                 int min = *(std::min_element(v.begin(),v.end()));
                 //qDebug() << min;
                 if(min < qGray(image.pixel(i,j))){
@@ -59,6 +75,12 @@ private:
                 points.push_back(p);
             }
         }
+        origin.x = 0;
+        origin.y = 0;
+        origin.z = 0.0;
+        rotate(3.1415/180*35.2,0,0);
+        rotate(0,3.1415/4,0);
+        rotate(0,0,-3.1415/4);
     }
     void rotate(double angle_x =0, double angle_y=0, double angle_z=0){ //Поворот
         for(auto it = points.begin();it != points.end();++it){ //Цикл по вершинах

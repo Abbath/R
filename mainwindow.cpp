@@ -1,175 +1,197 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
+#include <qwt_scale_draw.h>
+//#include <setup.hpp>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), image("4.bmp"), pix(image),
-    rect(false), d3(false), x1(0), y1(0), x2(image.width()-1), y2(image.height()-1), cc(0), threshold(255)
+    ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-    convert();
-    pix = QImage(1366, 768, image.format());
-    grabMouse();
-}
-
-void MainWindow::paintEvent(QPaintEvent *e) {
-    QPainter painter(this);
-    painter.setPen(Qt::green);
-    QImage image = this->image;
-    if(!rect) {
-        painter.drawImage(0, 0, image);
-        painter.drawRect(x1, y1, x2 - x1, y2 - y1);
-        return;
-    }
-    quint32 counter = 0, minx = x1, miny = y1, maxx = x2, maxy = y2;
-    for (unsigned  i = x1 + 1; i != x2; x1 < x2 ? ++i : --i ) {
-        for(unsigned j = y1 + 1; j != y2; y1 < y2 ? ++j : --j) {
-            if(image.pixel(i, j) >= tre()) {
-                counter++;
-            }
-//            if(image.pixel(i,j) - image.pixel(i,j+1) < 40) image.setPixel(i,j,qRgb(0,0,255));
-//            if(image.pixel(i,j) - image.pixel(i,j-1) < 40) image.setPixel(i,j,qRgb(0,0,255));
-//            if(image.pixel(i,j) - image.pixel(i+1,j) < 40) image.setPixel(i,j,qRgb(0,0,255));
-//            if(image.pixel(i,j) - image.pixel(i-1,j) < 40) image.setPixel(i,j,qRgb(0,0,255));
-            if(image.pixel(i,j) < tre() && (image.pixel(i + 1, j) >= tre() ||
-                                            image.pixel(i, j + 1) >= tre() ||
-                                            image.pixel(i - 1, j) >= tre() ||
-                                            image.pixel(i, j - 1) >= tre() )) {
-                image.setPixel(i, j, 0x00ff00);
-                if(minx > i) {
-                    minx = i;
-                }
-                if(miny < j) {
-                    miny = j;
-                }
-                if(maxx < i) {
-                    maxx = i;
-                }
-                if(maxy < j) {
-                    maxy = j;
-                }
-            }
-        }
-    }
-    for(unsigned i = x1; i != (x1 < x2 ? x2 + 1 : x2 - 1); x1 < x2 ? ++i : --i) {
-        if( image.pixel(i, y1) >= tre() ) {
-            image.setPixel(i, y1, 0x00ff00);
-        }
-        if( image.pixel(i, y2) >= tre() ) {
-            image.setPixel(i, y2, 0x00ff00);
-        }
-    }
-    for(unsigned i = y1; i != (y1 < y2 ? y2 + 1 : y2 - 1); y1 < y2 ? ++i : --i) {
-        if( image.pixel(x1, i) >= tre()) {
-            image.setPixel(x1, i, 0x00ff00);
-        }
-        if( image.pixel(x2, i) >= tre()) {
-            image.setPixel(x2, i, 0x00ff00);
-        }
-    }
-    if(d3) {
-        painter.setBrush(Qt::black);
-        painter.drawRect(0, 0, this->width(), this->height());
-        std::sort(points.begin(), points.end(), [](Point a, Point b) { return a.z < b.z; });
-        for ( Point p : points) {
-            pix.setPixel(p.x + 300, p.y + 500, (p.c >= threshold ? qRgb(0, 255, 0) : qRgb(p.c, p.c, p.c)));
-        }
-        painter.drawImage(0, 0, pix);
-        QLinearGradient fade(30, 90, 10, 500);
-        fade.setColorAt(0.0, QColor(255, 255, 255, 255));
-        fade.setColorAt(1.0, QColor(0, 0, 0, 255));
-        painter.fillRect(30, 90, 10, 500, fade);
-        painter.drawText(30,70,QString::number(cc));
+    ui->setupUi(this);this->showMaximized();
+    //    ui->spinBox_2->setMaximum(ui->widget->getSize().width());
+    //    ui->spinBox_3->setMaximum(ui->widget->getSize().height());
+    //    ui->spinBox_4->setMaximum(ui->widget->getSize().width());
+    //    ui->spinBox_5->setMaximum(ui->widget->getSize().height());
+    QFile file("bounds.conf");
+    if(file.open(QFile::ReadOnly)){
+        QTextStream str(&file);
+        int x1, x2, y1, y2;
+        str >> x1 >> y1 >> x2 >> y2;
+        ui->spinBox_2->setValue(x1);
+        ui->spinBox_3->setValue(y1);
+        ui->spinBox_4->setValue(x2);
+        ui->spinBox_5->setValue(y2);
     }else{
-        painter.drawImage(0, 0, image);
-        if(!rect) {
-            painter.drawRect(x1, y1, x2 - x1, y2 - y1);
-        }
-
+        QMessageBox::information(this, "No config found", "Unable to open config");
     }
-    painter.drawText(30, 30, QString::number(!rect ? abs(x1 - x2) * abs(y1 - y2) : counter)+
-                     QString(" x1: ")+QString::number(x1)+
-                     QString(" y1: ")+QString::number(y1)+
-                     QString(" x2:  ")+QString::number(x2)+
-                     QString(" y2: ")+QString::number(y2)+
-                     QString(" threshold: ")+QString::number(threshold));
-    painter.drawText(30, 50, QString(" minx: ")+QString::number(minx)+
-                     QString(" miny: ")+QString::number(miny)+
-                     QString(" maxx:  ")+QString::number(maxx)+
-                     QString(" maxy: ")+QString::number(maxy));
-    e->accept();
-}
-
-void MainWindow::mousePressEvent(QMouseEvent *e)
-{
-    if(e->button() == Qt::RightButton && !d3){
-        rect = false;
-        x1 = e->x();
-        y1 = e->y();
-        if(e->x() < 0) x1 = 0;
-        if(e->y() < 0) y1 = 0;
-        if(e->x() > image.width()) x1 = image.width();
-        if(e->y() > image.height()) y1 = image.height();
-    }else{
-        if(e->button() == Qt::MidButton){
-            cc = qGray(pix.pixel(e->x(),e->y()));
-            repaint();
-        }
-    }
-}
-
-void MainWindow::mouseReleaseEvent(QMouseEvent *e)
-{
-    if(e->button() == Qt::RightButton && !d3){
-        x2 = e->x();
-        y2 = e->y();
-        if(e->x() < 0) x2 = 0;
-        if(e->y() < 0) y2 = 0;
-        if(e->x() > image.width()) x2 = image.width();
-        if(e->y() > image.height()) y2 = image.height();
-        rect = true;
-        repaint();
-    }
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *e)
-{
-    if(!d3){
-        x2 = e->x();
-        y2 = e->y();
-        if(e->x() < 0) x2 = 0;
-        if(e->y() < 0) y2 = 0;
-        if(e->x() > image.width()) x2 = image.width();
-        if(e->y() > image.height()) y2 = image.height();
-        repaint();
-    }else{
-
-    }
-}
-
-void MainWindow::wheelEvent(QWheelEvent *e)
-{
-    qint32 a = threshold + e->delta()/40;
-    if( a > 255 ) a = 255;
-    if( a < 0 ) a = 0;
-    threshold = quint8(a);
-    convert(x1,y1,x2,y2);
-    repaint();
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *e){
-    if(e->key() == Qt::Key_D && e->modifiers() == Qt::ControlModifier){
-        d3 = !d3;
-        convert(x1,y1,x2,y2);
-    }
-    if(e->key() == Qt::Key_O && e->modifiers() == Qt::ControlModifier){
-        const QString fileName = QFileDialog::getOpenFileName( this, tr("Open data file"), "", tr("Image files (*.bmp)"));
-        image.load(fileName);
-    }
-    repaint();
+    ui->groupBox->hide();
+    ui->widget_2->setTitle("Lights");
+    ui->widget_2->setAxisTitle(ui->widget_2->xBottom, "Frame");
+    ui->widget_2->setAxisTitle(ui->widget_2->yLeft,"Points");
+    ui->widget_2->setAxisAutoScale( ui->widget_2->xBottom, true );
+    ui->widget_2->setAxisAutoScale( ui->widget_2->yLeft, true );
+    zoom = new QwtPlotZoomer(ui->widget_2->canvas());
+    zoom->setRubberBandPen(QPen(Qt::white));
+    QPen pen = QPen( Qt::red );
+    curve.setRenderHint( QwtPlotItem::RenderAntialiased );
+    curve.setPen( pen );
+    curve.attach( ui->widget_2 );
+    connect(ui->widget, SIGNAL(graph(QVector<int>)), this, SLOT(displayResults(QVector<int>)));
+    connect(ui->widget, SIGNAL(displayChanged(Display)), this, SLOT(setDisplay(Display)));
+    connect(ui->widget, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
+    ui->horizontalSlider_2->hide();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::setDisplay(Display dis)
+{
+    ui->label_top->setNum(static_cast<int>(dis.minx));
+    ui->label_bot->setNum(static_cast<int>(dis.maxx));
+    ui->label_left->setNum(static_cast<int>(dis.miny));
+    ui->label_right->setNum(static_cast<int>(dis.maxy));
+    ui->label_light->setNum(static_cast<int>(dis.sum));
+}
+
+void MainWindow::on_horizontalSlider_valueChanged(int value)
+{
+    ui->widget->setThreshold(value);
+    ui->widget_3->setStep((float)value/255.0);
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    const QString fileName = QFileDialog::getOpenFileName( this, tr("Open image file"), "", tr("Image files (*.bmp)"));
+    QImage image(fileName);
+    ui->spinBox_2->setMaximum(image.width());
+    ui->spinBox_3->setMaximum(image.height());
+    ui->spinBox_4->setMaximum(image.width());
+    ui->spinBox_5->setMaximum(image.height());
+    ui->widget->open(fileName);
+    ui->horizontalSlider_2->hide();
+}
+
+void MainWindow::on_action3D_triggered(bool checked)
+{
+    if(checked){
+        ui->widget_3->setStep((float)ui->widget->getThreshold()/255.0);
+        ui->widget_3->setImage(ui->widget->getImage().copy(ui->widget->getRect()));
+    }else{
+        QImage empty;
+        ui->widget_3->setStep(1.0f);
+        ui->widget_3->setImage(empty);
+    }
+    //ui->widget->set3D();
+}
+
+//void MainWindow::on_actionSetup_triggered()
+//{
+//    //Setup * p = new Setup(0, ui->widget->getSize());
+//    if(ui->groupBox->isHidden()){
+//        ui->groupBox->show();
+//    }else{
+//        ui->groupBox->hide();
+//    }
+//    //p->show();
+//}
+
+void MainWindow::on_actionSave_Bounds_triggered()
+{
+    ui->widget->saveBounds();
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    //ui->widget->saveBounds();
+    QFile file("bounds.conf");
+    file.open(QFile::WriteOnly | QFile::Truncate);
+    QTextStream str(&file);
+    str << ui->spinBox_2->value() << "\n" << ui->spinBox_3->value() << "\n" << ui->spinBox_4->value() << "\n" << ui->spinBox_5->value();
+}
+
+void MainWindow::setBounds(QRect rect)
+{
+    ui->spinBox_2->setValue(rect.left());
+    ui->spinBox_3->setValue(rect.top());
+    ui->spinBox_4->setValue(rect.right());
+    ui->spinBox_5->setValue(rect.bottom());
+}
+
+void MainWindow::on_spinBox_2_valueChanged(int arg1)
+{
+    ui->widget->setX1(arg1);
+}
+
+void MainWindow::on_spinBox_3_valueChanged(int arg1)
+{
+    ui->widget->setY1(arg1);
+}
+
+void MainWindow::on_spinBox_4_valueChanged(int arg1)
+{
+    ui->widget->setX2(arg1);
+}
+
+void MainWindow::on_spinBox_5_valueChanged(int arg1)
+{
+    ui->widget->setY2(arg1);
+}
+
+
+void MainWindow::on_actionSetup_triggered(bool checked)
+{
+    if(checked){
+        ui->groupBox->show();
+    }else{
+        ui->groupBox->hide();
+    }
+}
+
+void MainWindow::on_actionOpen_Video_triggered()
+{
+    int n = ui->widget->openVideo();
+    if(n){
+        ui->horizontalSlider_2->show();
+        ui->horizontalSlider_2->setMaximum(n-1);
+        ui->horizontalSlider_2->setValue(0);
+        ui->widget->getFrame(0);
+    }
+}
+
+void MainWindow::displayResults(const QVector<int> &res)
+{
+    
+    ui->widget_2->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
+    ui->widget_2->replot();
+    
+    QVector < QPointF > points( res.size() );
+    quint32 counter = 0;
+    auto pointsIt = points.begin();
+    
+    for ( auto ri = res.constBegin(); ri != res.constEnd(); ++ ri, ++ pointsIt, ++ counter ) {
+        (*pointsIt) = QPointF( counter, (*ri) );
+    }
+    
+    QwtPointSeriesData * data = new QwtPointSeriesData(points);
+    curve.setData(data);
+    curve.attach( ui->widget_2 );
+    ui->widget_2->replot();
+}
+
+void MainWindow::on_actionRun_triggered()
+{
+    ui->widget->run();
+}
+
+void MainWindow::on_horizontalSlider_2_valueChanged(int value)
+{
+    ui->widget->getFrame(value);
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+    ui->widget->saveResults();
 }

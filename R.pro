@@ -27,8 +27,7 @@ HEADERS  += mainwindow.hpp \
     mainwidget.hpp
 
 FORMS    += mainwindow.ui \
-    imagearea.ui \
-    setup.ui
+    imagearea.ui
 
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"

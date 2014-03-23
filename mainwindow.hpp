@@ -10,6 +10,8 @@
 #include <qwt.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_zoomer.h>
+#include <qwt_plot_magnifier.h>
+#include <qwt_plot_panner.h>
 //#include <QtWidgets>
 
 namespace Ui {
@@ -39,14 +41,23 @@ private slots:
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
     void displayResults(const QVector<int> &res);
+    void displayResults(const QVector<double> &res);
     void on_actionRun_triggered();
     void on_actionSave_triggered();
 
-    void on_horizontalSlider_2_valueChanged(int value);
+ //   void on_horizontalSlider_2_valueChanged(int value);
 
 private:
+    QwtPlotPanner *pan;
+    QwtPlotMagnifier *mag;
     QwtPlotZoomer *zoom;
     QwtPlotCurve curve;
+    
+    QwtPlotPanner *pan1;
+    QwtPlotMagnifier *mag1;
+    QwtPlotZoomer *zoom1;
+    QwtPlotCurve curve1;
+    
     Ui::MainWindow *ui;
 };
 

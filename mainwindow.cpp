@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->widget_2->setAxisTitle(ui->widget_2->yLeft,"Points");
     ui->widget_2->setAxisAutoScale( ui->widget_2->xBottom, true );
     ui->widget_2->setAxisAutoScale( ui->widget_2->yLeft, true );
-    pan = new QwtPlotPanner(ui->widget_2->canvas());
+    //pan = new QwtPlotPanner(ui->widget_2->canvas());
     mag = new QwtPlotMagnifier(ui->widget_2->canvas());
     zoom = new QwtPlotZoomer(ui->widget_2->canvas());
     zoom->setRubberBandPen(QPen(Qt::white));
@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->widget_4->setAxisTitle(ui->widget_4->yLeft,"Mean");
     ui->widget_4->setAxisAutoScale( ui->widget_4->xBottom, true );
     ui->widget_4->setAxisAutoScale( ui->widget_4->yLeft, true );
-    pan1 = new QwtPlotPanner(ui->widget_4->canvas());
+    //pan1 = new QwtPlotPanner(ui->widget_4->canvas());
     mag1 = new QwtPlotMagnifier(ui->widget_4->canvas());
     zoom1 = new QwtPlotZoomer(ui->widget_4->canvas());
     zoom1->setRubberBandPen(QPen(Qt::white));
@@ -189,10 +189,16 @@ void MainWindow::on_actionSetup_triggered(bool checked)
 void MainWindow::on_actionOpen_Video_triggered()
 {
     fileNameV = QFileDialog::getOpenFileName( this, tr("Open data file"), "", tr("Video files (*.avi)"));
-    vp->setFilename(fileNameV);
-    std::cout << ui->widget->getThreshold() << std::endl;
-    vp->setThreshold(ui->widget->getThreshold());
-    vp->setRect(ui->widget->getRect());
+    CvCapture * capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
+    if(!capture)
+    {
+        QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
+    }else{
+        vp->setFilename(fileNameV);
+        IplImage* frame = cvQueryFrame(capture);
+        QImage image = vp->IplImage2QImage(frame);
+        ui->widget->frameChanged(image);
+    }
 }
 
 void MainWindow::displayResultsL(const QVector<int> &res)
@@ -236,8 +242,13 @@ void MainWindow::displayResultsM(const QVector<double> &res)
 
 void MainWindow::on_actionRun_triggered()
 {
-    QThreadPool::globalInstance()->start(vp);
+    if(!fileNameV.isNull()){
+        vp->setThreshold(ui->widget->getThreshold());
+        vp->setRect(ui->widget->getRect());
+        QThreadPool::globalInstance()->start(vp);
+    }
 }
+
 
 /*void MainWindow::on_horizontalSlider_2_valueChanged(int value)
 {

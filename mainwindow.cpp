@@ -3,6 +3,7 @@
 #include <qwt_scale_draw.h>
 //#include <setup.hpp>
 
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -53,10 +54,20 @@ MainWindow::MainWindow(QWidget *parent) :
     curve1.setPen( pen1 );
     curve1.attach( ui->widget_4 );
     
-    connect(ui->widget, SIGNAL(graph(QVector<int>)), this, SLOT(displayResults(QVector<int>)));
-    connect(ui->widget, SIGNAL(graph(QVector<double>)), this, SLOT(displayResults(QVector<double>)));
+    vp = new VideoProcessor();
+
+
+    qRegisterMetaType<QVector<int>>("QVector<int>");
+    qRegisterMetaType<QVector<double>>("QVector<double>");
+
+    connect(vp, SIGNAL(graphL(QVector<int>)), this, SLOT(displayResultsL(QVector<int>)),Qt::QueuedConnection);
+    connect(vp, SIGNAL(graphM(QVector<double>)), this, SLOT(displayResultsM(QVector<double>)),Qt::QueuedConnection);
+
     connect(ui->widget, SIGNAL(displayChanged(Display)), this, SLOT(setDisplay(Display)));
     connect(ui->widget, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
+
+    connect(vp, SIGNAL(frameChanged(QImage)),ui->widget, SLOT(frameChanged(QImage)),Qt::QueuedConnection);
+    connect(this, SIGNAL(stop()), vp, SLOT(stopThis()),Qt::QueuedConnection);
     //ui->horizontalSlider_2->hide();
 }
 
@@ -177,16 +188,14 @@ void MainWindow::on_actionSetup_triggered(bool checked)
 
 void MainWindow::on_actionOpen_Video_triggered()
 {
-    int n = ui->widget->openVideo();
-    if(n){
-        //ui->horizontalSlider_2->show();
-        //ui->horizontalSlider_2->setMaximum(n-1);
-        //ui->horizontalSlider_2->setValue(0);
-        ui->widget->getFrame(0);
-    }
+    fileNameV = QFileDialog::getOpenFileName( this, tr("Open data file"), "", tr("Video files (*.avi)"));
+    vp->setFilename(fileNameV);
+    std::cout << ui->widget->getThreshold() << std::endl;
+    vp->setThreshold(ui->widget->getThreshold());
+    vp->setRect(ui->widget->getRect());
 }
 
-void MainWindow::displayResults(const QVector<int> &res)
+void MainWindow::displayResultsL(const QVector<int> &res)
 {
     
     ui->widget_2->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
@@ -206,7 +215,7 @@ void MainWindow::displayResults(const QVector<int> &res)
     ui->widget_2->replot();
 }
 
-void MainWindow::displayResults(const QVector<double> &res)
+void MainWindow::displayResultsM(const QVector<double> &res)
 {
     ui->widget_4->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
     ui->widget_4->replot();
@@ -227,7 +236,7 @@ void MainWindow::displayResults(const QVector<double> &res)
 
 void MainWindow::on_actionRun_triggered()
 {
-    ui->widget->run();
+    QThreadPool::globalInstance()->start(vp);
 }
 
 /*void MainWindow::on_horizontalSlider_2_valueChanged(int value)
@@ -238,4 +247,9 @@ void MainWindow::on_actionRun_triggered()
 void MainWindow::on_actionSave_triggered()
 {
     ui->widget->saveResults();
+}
+
+void MainWindow::on_actionStop_triggered()
+{
+    emit stop();
 }

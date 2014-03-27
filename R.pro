@@ -18,20 +18,29 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     imagearea.cpp \
     converter.cpp \
-    mainwidget.cpp
+    mainwidget.cpp \
+    videoprocessor.cpp
 
 HEADERS  += mainwindow.hpp \
     imagearea.hpp \
     converter.hpp \
     helpers.hpp \
-    mainwidget.hpp
+    mainwidget.hpp \
+    videoprocessor.h
 
 FORMS    += mainwindow.ui \
     imagearea.ui
-
+unix{
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
+}
 
+win32{
+LIBS += -lopencv_core246 -lopencv_highgui246 -lopencv_imgproc246 -lqwt -L"C:\opencv-build\bin"
+INCLUDEPATH += "C:\opencv\build\include"
+INCLUDEPATH += "C:\Users\Dan\Downloads\qwt-6.1.0\qwt-6.1.0\qwt"
+LIBS += -L"C:\Users\Dan\Downloads\qwt-6.1.0\qwt-6.1.0\lib"
+}
 QMAKE_CXXFLAGS += -std=c++0x
 
 RESOURCES += \

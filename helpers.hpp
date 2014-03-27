@@ -2,6 +2,7 @@
 #define HELPERS_HPP
 
 #include <QtCore>
+#include <fstream>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -33,4 +34,6 @@ void flush(){
     }
 }
 };
+
+
 #endif // HELPERS_HPP

@@ -45,10 +45,11 @@ private:
     QVector<int> res;
     QVector<double> resm;
     QRgb tre() const { return qRgb(threshold, threshold, threshold); }
+    int scan(QVector<Point>& v);
     Ui::ImageArea *ui;
     QImage image, pix;
     QVector<Point> points;
-    bool rect, d3, vid;
+    bool rect, d3, vid = false;
 
     quint32 x1=0, y1=0, x2=0, y2=0, cc;
     quint8 threshold;
@@ -64,6 +65,8 @@ public:
     void setY1(quint32 y){ y1 = y; repaint();}
     void setX2(quint32 x){ x2 = x; repaint();}
     void setY2(quint32 y){ y2 = y; repaint();}
+public slots:
+    void frameChanged(QImage _image);
 signals:
     void rectChanged(QRect r);
     void graph(const QVector<int> &v);

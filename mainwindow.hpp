@@ -6,6 +6,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <imagearea.hpp>
+#include <videoprocessor.h>
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>
@@ -13,6 +14,7 @@
 #include <qwt_plot_magnifier.h>
 #include <qwt_plot_panner.h>
 //#include <QtWidgets>
+
 
 namespace Ui {
 class MainWindow;
@@ -40,12 +42,14 @@ private slots:
     void on_spinBox_5_valueChanged(int arg1);
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
-    void displayResults(const QVector<int> &res);
-    void displayResults(const QVector<double> &res);
+    void displayResultsL(const QVector<int> &res);
+    void displayResultsM(const QVector<double> &res);
     void on_actionRun_triggered();
     void on_actionSave_triggered();
 
  //   void on_horizontalSlider_2_valueChanged(int value);
+
+    void on_actionStop_triggered();
 
 private:
     QwtPlotPanner *pan;
@@ -59,6 +63,11 @@ private:
     QwtPlotCurve curve1;
     
     Ui::MainWindow *ui;
+    VideoProcessor *vp;
+
+    QString fileNameV;
+signals:
+    void stop();
 };
 
 #endif // MAINWINDOW_HPP

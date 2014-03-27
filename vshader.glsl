@@ -11,9 +11,9 @@ void main()
 {
   gl_Position = mvp_matrix * a_position;
   if ( a_position.z < step ) {
-    color = vec4(a_position.z - colorOffset, a_position.z - colorOffset, a_position.z - colorOffset, 1.0f);
+    color = vec3(a_position.z - colorOffset, a_position.z - colorOffset, a_position.z - colorOffset);
   }
   else {
-    color = selectColor;
+    color = selectColor.xyz;
   }
 }

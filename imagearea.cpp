@@ -1,6 +1,10 @@
 #include "imagearea.hpp"
 #include "ui_imagearea.h"
 
+/*!
+ * \brief ImageArea::ImageArea
+ * \param parent
+ */
 ImageArea::ImageArea(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ImageArea),
@@ -12,14 +16,20 @@ ImageArea::ImageArea(QWidget *parent) :
     setX2(image.height()-1);
     ui->setupUi(this);
     update();
-    //  grabMouse();
 }
 
+/*!
+ * \brief ImageArea::~ImageArea
+ */
 ImageArea::~ImageArea()
 {
     delete ui;
 }
 
+/*!
+ * \brief ImageArea::paintEvent
+ * \param e
+ */
 void ImageArea::paintEvent(QPaintEvent *e) {
     QPainter painter(this);
     painter.setPen(Qt::green);
@@ -51,6 +61,10 @@ void ImageArea::paintEvent(QPaintEvent *e) {
     e->accept();
 }
 
+/*!
+ * \brief ImageArea::mousePressEvent
+ * \param e
+ */
 void ImageArea::mousePressEvent(QMouseEvent *e)
 {
     if(e->button() == Qt::LeftButton){
@@ -64,6 +78,10 @@ void ImageArea::mousePressEvent(QMouseEvent *e)
     }
 }
 
+/*!
+ * \brief ImageArea::mouseReleaseEvent
+ * \param e
+ */
 void ImageArea::mouseReleaseEvent(QMouseEvent *e)
 {
     if(e->button() == Qt::LeftButton){
@@ -79,6 +97,10 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *e)
     }
 }
 
+/*!
+ * \brief ImageArea::mouseMoveEvent
+ * \param e
+ */
 void ImageArea::mouseMoveEvent(QMouseEvent *e)
 {
     if(e->buttons() & Qt::LeftButton){
@@ -94,24 +116,21 @@ void ImageArea::mouseMoveEvent(QMouseEvent *e)
     }
 }
 
-void ImageArea::wheelEvent(QWheelEvent *e)
-{
-    //qint32 a = threshold + e->delta()/40;
-    //if( a > 255 ) a = 255;
-    //if( a < 0 ) a = 0;
-    //threshold = quint8(a);
-    //repaint();
-    e->accept();
-}
-
+/*!
+ * \brief ImageArea::open
+ * \param filename
+ */
 void ImageArea::open(QString filename)
 {
-   // fileNameV.clear();
     image.load(filename);
     pix = image;
     update();
 }
 
+/*!
+ * \brief ImageArea::loadImage
+ * \param _image
+ */
 void ImageArea::loadImage(QImage _image)
 {
     image = _image;
@@ -119,6 +138,10 @@ void ImageArea::loadImage(QImage _image)
     update();
 }
 
+/*!
+ * \brief ImageArea::readConfig
+ * \param confname
+ */
 void ImageArea::readConfig(QString confname)
 {
     QFile file(confname);
@@ -135,12 +158,9 @@ void ImageArea::readConfig(QString confname)
     setY2(y2);
 }
 
-void ImageArea::setThreshold(int v)
-{
-    //threshold = v;
-    update();
-}
-
+/*!
+ * \brief ImageArea::saveBounds
+ */
 void ImageArea::saveBounds()
 {
     QFile file("bounds.conf");
@@ -149,6 +169,9 @@ void ImageArea::saveBounds()
     str << x1() << "\n" << y1() << "\n" << x2() << "\n" << y2();
 }
 
+/*!
+ * \brief ImageArea::saveResults
+ */
 void ImageArea::saveResults()
 {
     QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Data (*.dat)");
@@ -161,6 +184,16 @@ void ImageArea::saveResults()
     }
 }
 
+/*!
+ * \brief ImageArea::frameChanged
+ * \param _image
+ */
+void ImageArea::frameChanged(QImage _image)
+{
+    pix = _image;
+    rect = true;
+    update();
+}
 
 //int ImageArea::scan(QVector<Point> &v)
 //{
@@ -227,9 +260,4 @@ void ImageArea::saveResults()
 //    return c;
 //}
 
-void ImageArea::frameChanged(QImage _image)
-{
-    pix = _image;
-    rect = true;
-    update();
-}
+

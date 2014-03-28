@@ -22,7 +22,6 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.hpp \
     imagearea.hpp \
-    helpers.hpp \
     mainwidget.hpp \
     processor.hpp
 

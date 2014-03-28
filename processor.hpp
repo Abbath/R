@@ -3,7 +3,9 @@
 
 #include <QRunnable>
 #include <QMessageBox>
-#include <helpers.hpp>
+#include <QThread>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 class Processor : public QObject, public QRunnable
 {
@@ -16,14 +18,15 @@ public:
     void run();
     QImage IplImage2QImage(const IplImage *iplImage);
     QPair<int, double> processImage(QImage _image);
-private:
-    unsigned int qrgbToGray(QRgb rgb);
 signals:
     void frameChanged(QImage frame);
+    void maxMinBounds(QRect rect);
     void graphL(const QVector<int> &v);
     void graphM(const QVector<double> &v);
 public slots:
     void stopThis();
+private:
+    unsigned int qrgbToGray(QRgb rgb);
 private:
     QString filename;
     QRect rect;

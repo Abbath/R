@@ -1,60 +1,56 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include <qwt_scale_draw.h>
-//#include <setup.hpp>
 
-
+/*!
+ * \brief MainWindow::MainWindow
+ * \param parent
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);this->showMaximized();
-    QFile file("bounds.conf");
-    if(file.open(QFile::ReadOnly)){
-        QTextStream str(&file);
-        int x1, x2, y1, y2;
-        str >> x1 >> y1 >> x2 >> y2;
-        ui->spinBox_2->setMaximum(x1);
-        ui->spinBox_3->setMaximum(y1);
-        ui->spinBox_4->setMaximum(x2);
-        ui->spinBox_5->setMaximum(y2);
-        ui->spinBox_2->setValue(x1);
-        ui->spinBox_3->setValue(y1);
-        ui->spinBox_4->setValue(x2);
-        ui->spinBox_5->setValue(y2);
-    }else{
-        QMessageBox::information(this, "No config found", "Unable to open config");
-    }
+    ui->setupUi(this);
+    
+    this->showMaximized();
+    
     ui->groupBox->hide();
-    ui->widget_2->setTitle("Lights");
-    ui->widget_2->setAxisTitle(ui->widget_2->xBottom, "Frame");
-    ui->widget_2->setAxisTitle(ui->widget_2->yLeft,"Points");
-    ui->widget_2->setAxisAutoScale( ui->widget_2->xBottom, true );
-    ui->widget_2->setAxisAutoScale( ui->widget_2->yLeft, true );
-    //pan = new QwtPlotPanner(ui->widget_2->canvas());
-    mag = new QwtPlotMagnifier(ui->widget_2->canvas());
-    zoom = new QwtPlotZoomer(ui->widget_2->canvas());
+    ui->l_plot->setTitle("Lights");
+    ui->l_plot->setAxisTitle(ui->l_plot->xBottom, "Frame");
+    ui->l_plot->setAxisTitle(ui->l_plot->yLeft,"Points");
+    ui->l_plot->setAxisAutoScale( ui->l_plot->xBottom, true );
+    ui->l_plot->setAxisAutoScale( ui->l_plot->yLeft, true );
+    mag = new QwtPlotMagnifier(ui->l_plot->canvas());
+    zoom = new QwtPlotZoomer(ui->l_plot->canvas());
     zoom->setRubberBandPen(QPen(Qt::white));
     curve.setRenderHint( QwtPlotItem::RenderAntialiased );
     curve.setPen( QPen( Qt::red ) );
-    curve.attach( ui->widget_2 );
+    curve.attach( ui->l_plot );
     
-    ui->widget_4->setTitle("Lights mean");
-    ui->widget_4->setAxisTitle(ui->widget_4->xBottom, "Frame");
-    ui->widget_4->setAxisTitle(ui->widget_4->yLeft,"Mean");
-    ui->widget_4->setAxisAutoScale( ui->widget_4->xBottom, true );
-    ui->widget_4->setAxisAutoScale( ui->widget_4->yLeft, true );
-    //pan1 = new QwtPlotPanner(ui->widget_4->canvas());
-    mag1 = new QwtPlotMagnifier(ui->widget_4->canvas());
-    zoom1 = new QwtPlotZoomer(ui->widget_4->canvas());
+    ui->m_plot->setTitle("Lights mean");
+    ui->m_plot->setAxisTitle(ui->m_plot->xBottom, "Frame");
+    ui->m_plot->setAxisTitle(ui->m_plot->yLeft,"Mean");
+    ui->m_plot->setAxisAutoScale( ui->m_plot->xBottom, true );
+    ui->m_plot->setAxisAutoScale( ui->m_plot->yLeft, true );
+    mag1 = new QwtPlotMagnifier(ui->m_plot->canvas());
+    zoom1 = new QwtPlotZoomer(ui->m_plot->canvas());
     zoom1->setRubberBandPen( QPen( Qt::white ) );
     curve1.setRenderHint( QwtPlotItem::RenderAntialiased );
     curve1.setPen( QPen( Qt::red ) );
-    curve1.attach( ui->widget_4 );
+    curve1.attach( ui->m_plot );
     
     vp = new Processor();
     
     ui->imagearea->readConfig("bounds.conf");
+    QRect r = ui->imagearea->getRect();
+    ui->spinBox_X1->setMaximum(r.left());
+    ui->spinBox_Y1->setMaximum(r.top());
+    ui->spinBox_X2->setMaximum(r.right());
+    ui->spinBox_Y2->setMaximum(r.bottom());
+    ui->spinBox_X1->setValue(r.left());
+    ui->spinBox_Y1->setValue(r.top());
+    ui->spinBox_X2->setValue(r.right());
+    ui->spinBox_Y2->setValue(r.bottom());
     
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<QVector<double>>("QVector<double>");
@@ -62,130 +58,148 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(vp, SIGNAL(graphL(QVector<int>)), this, SLOT(displayResultsL(QVector<int>)),Qt::QueuedConnection);
     connect(vp, SIGNAL(graphM(QVector<double>)), this, SLOT(displayResultsM(QVector<double>)),Qt::QueuedConnection);
     
-    connect(ui->imagearea, SIGNAL(displayChanged(Display)), this, SLOT(setDisplay(Display)));
-    connect(ui->imagearea, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
-    
     connect(vp, SIGNAL(frameChanged(QImage)),ui->imagearea, SLOT(frameChanged(QImage)),Qt::QueuedConnection);
     connect(this, SIGNAL(stop()), vp, SLOT(stopThis()),Qt::QueuedConnection);
-    //ui->horizontalSlider_2->hide();
+    connect(vp, SIGNAL(maxMinBounds(QRect)),this, SLOT(setMaxMinBounds(QRect)));
 }
 
+/*!
+ * \brief MainWindow::~MainWindow
+ */
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-void MainWindow::setDisplay(Display dis)
-{
-    ui->label_top->setNum(dis.miny);
-    ui->label_bot->setNum(dis.maxy);
-    ui->label_left->setNum(dis.minx);
-    ui->label_right->setNum(dis.maxx);
-    ui->label_light->setNum(dis.sum);
-    ui->label_mean->setNum(dis.mean);
-}
-
+/*!
+ * \brief MainWindow::on_horizontalSlider_valueChanged
+ * \param value
+ */
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
     if(ui->action3D->isChecked()){
-        ui->widget_3->setStep((float)value/255.0);
+        ui->widget_3d->setStep((float)value/255.0);
     }
-    ui->imagearea->setThreshold(value);
 }
 
+/*!
+ * \brief MainWindow::on_actionOpen_triggered
+ */
 void MainWindow::on_actionOpen_triggered()
 {
     filename = QFileDialog::getOpenFileName( this, tr("Open image file"), "", tr("Image files (*.bmp)"));
     QImage image(filename);
-    ui->spinBox_2->setMaximum(image.width());
-    ui->spinBox_3->setMaximum(image.height());
-    ui->spinBox_4->setMaximum(image.width());
-    ui->spinBox_5->setMaximum(image.height());
+    ui->spinBox_X1->setMaximum(image.width());
+    ui->spinBox_Y1->setMaximum(image.height());
+    ui->spinBox_X2->setMaximum(image.width());
+    ui->spinBox_Y2->setMaximum(image.height());
     vp->setThreshold(ui->spinBox->value());
     vp->setRect(ui->imagearea->getRect());
-    vp->processImage(image);
+    QPair<int,double> id = vp->processImage(image);
+    ui->label_light->setNum(id.first);
+    ui->label_mean->setNum(id.second);
     ui->imagearea->open(filename);
-    //ui->horizontalSlider_2->hide();
 }
 
+/*!
+ * \brief MainWindow::on_action3D_triggered
+ * \param checked
+ */
 void MainWindow::on_action3D_triggered(bool checked)
 {
     if(checked){
-        ui->widget_3->setStep((float)ui->spinBox->value()/255.0);
-        ui->widget_3->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+        ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
+        ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
     }else{
         QImage empty;
-        ui->widget_3->setStep(1.0f);
-        ui->widget_3->setImage(empty);
+        ui->widget_3d->setStep(1.0f);
+        ui->widget_3d->setImage(empty);
     }
-    //ui->widget->set3D();
 }
 
-//void MainWindow::on_actionSetup_triggered()
-//{
-//    //Setup * p = new Setup(0, ui->widget->getSize());
-//    if(ui->groupBox->isHidden()){
-//        ui->groupBox->show();
-//    }else{
-//        ui->groupBox->hide();
-//    }
-//    //p->show();
-//}
-
-void MainWindow::on_actionSave_Bounds_triggered()
-{
-    ui->imagearea->saveBounds();
-}
-
+/*!
+ * \brief MainWindow::on_pushButton_clicked
+ */
 void MainWindow::on_pushButton_clicked()
 {
-    //ui->widget->saveBounds();
     QFile file("bounds.conf");
     file.open(QFile::WriteOnly | QFile::Truncate);
     QTextStream str(&file);
-    str << ui->spinBox_2->value() << "\n" << ui->spinBox_3->value() << "\n" << ui->spinBox_4->value() << "\n" << ui->spinBox_5->value();
+    str << ui->spinBox_X1->value() << "\n" << ui->spinBox_Y1->value() << "\n" << ui->spinBox_X2->value() << "\n" << ui->spinBox_Y2->value();
 }
 
+/*!
+ * \brief MainWindow::setBounds
+ * \param rect
+ */
 void MainWindow::setBounds(QRect rect)
 {
-    ui->spinBox_2->setValue(rect.left());
-    ui->spinBox_3->setValue(rect.top());
-    ui->spinBox_4->setValue(rect.right());
-    ui->spinBox_5->setValue(rect.bottom());
+    ui->spinBox_X1->setValue(rect.left());
+    ui->spinBox_Y1->setValue(rect.top());
+    ui->spinBox_X2->setValue(rect.right());
+    ui->spinBox_Y2->setValue(rect.bottom());
     if(ui->action3D->isChecked()){
-        ui->widget_3->setStep((float)ui->spinBox->value()/255.0);
-        ui->widget_3->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+        ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
+        ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
     }
     vp->setThreshold(ui->spinBox->value());
     vp->setRect(rect);
     
     if(!filename.isNull()){
         QImage image(filename);
-        vp->processImage(image);
+        QPair<int, double> id = vp->processImage(image);
+        ui->label_light->setNum(id.first);
+        ui->label_mean->setNum(id.second); 
     }
 }
 
-void MainWindow::on_spinBox_2_valueChanged(int arg1)
+void MainWindow::setMaxMinBounds(QRect rect)
+{
+    if(!filename.isNull()){
+        ui->label_left->setNum(rect.left());
+        ui->label_top->setNum(rect.top());
+        ui->label_right->setNum(rect.right());
+        ui->label_bot->setNum(rect.bottom());
+    }
+}
+
+/*!
+ * \brief MainWindow::on_spinBox_2_valueChanged
+ * \param arg1
+ */
+void MainWindow::on_spinBox_X1_valueChanged(int arg1)
 {
     ui->imagearea->setX1(arg1);
 }
 
-void MainWindow::on_spinBox_3_valueChanged(int arg1)
+/*!
+ * \brief MainWindow::on_spinBox_3_valueChanged
+ * \param arg1
+ */
+void MainWindow::on_spinBox_Y1_valueChanged(int arg1)
 {
     ui->imagearea->setY1(arg1);
 }
 
-void MainWindow::on_spinBox_4_valueChanged(int arg1)
+void MainWindow::on_spinBox_X2_valueChanged(int arg1)
 {
     ui->imagearea->setX2(arg1);
 }
 
-void MainWindow::on_spinBox_5_valueChanged(int arg1)
+/*!
+ * \brief MainWindow::on_spinBox_5_valueChanged
+ * \param arg1
+ */
+void MainWindow::on_spinBox_Y2_valueChanged(int arg1)
 {
     ui->imagearea->setY2(arg1);
 }
 
 
+/*!
+ * \brief MainWindow::on_actionSetup_triggered
+ * \param checked
+ */
 void MainWindow::on_actionSetup_triggered(bool checked)
 {
     if(checked){
@@ -195,6 +209,9 @@ void MainWindow::on_actionSetup_triggered(bool checked)
     }
 }
 
+/*!
+ * \brief MainWindow::on_actionOpen_Video_triggered
+ */
 void MainWindow::on_actionOpen_Video_triggered()
 {
     filename.clear();
@@ -211,11 +228,15 @@ void MainWindow::on_actionOpen_Video_triggered()
     }
 }
 
+/*!
+ * \brief MainWindow::displayResultsL
+ * \param res
+ */
 void MainWindow::displayResultsL(const QVector<int> &res)
 {
     
-    ui->widget_2->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
-    ui->widget_2->replot();
+    ui->l_plot->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
+    ui->l_plot->replot();
     
     QVector < QPointF > points( res.size() );
     quint32 counter = 0;
@@ -227,14 +248,18 @@ void MainWindow::displayResultsL(const QVector<int> &res)
     
     QwtPointSeriesData * data = new QwtPointSeriesData(points);
     curve.setData(data);
-    curve.attach( ui->widget_2 );
-    ui->widget_2->replot();
+    curve.attach( ui->l_plot );
+    ui->l_plot->replot();
 }
 
+/*!
+ * \brief MainWindow::displayResultsM
+ * \param res
+ */
 void MainWindow::displayResultsM(const QVector<double> &res)
 {
-    ui->widget_4->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
-    ui->widget_4->replot();
+    ui->m_plot->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
+    ui->m_plot->replot();
     
     QVector < QPointF > points( res.size() );
     quint32 counter = 0;
@@ -246,10 +271,13 @@ void MainWindow::displayResultsM(const QVector<double> &res)
     
     QwtPointSeriesData * data = new QwtPointSeriesData(points);
     curve1.setData(data);
-    curve1.attach( ui->widget_4 );
-    ui->widget_4->replot();
+    curve1.attach( ui->m_plot );
+    ui->m_plot->replot();
 }
 
+/*!
+ * \brief MainWindow::on_actionRun_triggered
+ */
 void MainWindow::on_actionRun_triggered()
 {
     if(!fileNameV.isNull()){
@@ -259,17 +287,17 @@ void MainWindow::on_actionRun_triggered()
     }
 }
 
-
-/*void MainWindow::on_horizontalSlider_2_valueChanged(int value)
-{
-    ui->widget->getFrame(value);
-}*/
-
+/*!
+ * \brief MainWindow::on_actionSave_triggered
+ */
 void MainWindow::on_actionSave_triggered()
 {
     ui->imagearea->saveResults();
 }
 
+/*!
+ * \brief MainWindow::on_actionStop_triggered
+ */
 void MainWindow::on_actionStop_triggered()
 {
     emit stop();

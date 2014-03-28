@@ -1,17 +1,30 @@
 #include "processor.hpp"
 #include <fstream>
+
+/*!
+ * \brief Processor::qrgbToGray
+ * \param rgb
+ * \return 
+ */
 unsigned int Processor::qrgbToGray(QRgb rgb)
 {
     QColor color(rgb);
     return (color.red()+color.green()+color.blue())/3;
 }
 
+/*!
+ * \brief Processor::Processor
+ * \param parent
+ */
 Processor::Processor(QObject *parent)
 {
     Q_UNUSED(parent)
     setAutoDelete(false);
 }
 
+/*!
+ * \brief Processor::run
+ */
 void Processor::run()
 {
     std::ofstream f("log1.txt");
@@ -33,9 +46,6 @@ void Processor::run()
         }
         QImage image = IplImage2QImage(frame).mirrored(false, true);
         QPair<int,double> pr = processImage(image);
-        //QMessageBox::information(0,QString::number(pr.first),QString::number(pr.second));
-        //QThread::currentThread()->sleep(100);
-        //f << pr.first << " " << pr.second << std::endl;
         res.push_back(pr.first);
         resm.push_back(pr.second);
         QThread::currentThread()->usleep(500);
@@ -45,6 +55,11 @@ void Processor::run()
     emit graphM(resm);
 }
 
+/*!
+ * \brief Processor::processImage
+ * \param _image
+ * \return 
+ */
 QPair<int,double> Processor::processImage(QImage _image)
 {
     int counter = 0;
@@ -57,7 +72,6 @@ QPair<int,double> Processor::processImage(QImage _image)
         for (unsigned  i = x1 + 1; i != x2; x1 < x2 ? ++i : --i ) {
             for(unsigned j = y1 + 1; j != y2; y1 < y2 ? ++j : --j) {
                 if(qrgbToGray(_image.pixel(i, j)) >= threshold) {
-                    //std::cout << _image.pixel(i,j) << std::endl;
                     histogram[qrgbToGray(_image.pixel(i, j))]++;
                     counter++;
                 }
@@ -101,14 +115,20 @@ QPair<int,double> Processor::processImage(QImage _image)
         for( int i = 0; i < 256 ; ++i){
             sum += histogram[i]*i;
         }
+        QRect r(minx,miny,maxx,maxy);
+        emit maxMinBounds(r);
         emit frameChanged(image);
     }
     sum = (counter != 0 ? sum/counter : 0);
     QPair<int,double> res(counter, sum);
-   // f << counter << " " << sum << std::endl;
     return res;
 }
 
+/*!
+ * \brief Processor::IplImage2QImage
+ * \param iplImage
+ * \return 
+ */
 QImage Processor::IplImage2QImage(const IplImage *iplImage)
 {
     int height = iplImage->height;
@@ -119,6 +139,9 @@ QImage Processor::IplImage2QImage(const IplImage *iplImage)
     return img.rgbSwapped();
 }
 
+/*!
+ * \brief Processor::stopThis
+ */
 void Processor::stopThis()
 {
     stop = true;

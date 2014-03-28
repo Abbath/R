@@ -79,7 +79,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_2"/>
+        <widget class="QSpinBox" name="spinBox_X1"/>
        </item>
        <item>
         <widget class="QLabel" name="label_2">
@@ -92,7 +92,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_3"/>
+        <widget class="QSpinBox" name="spinBox_Y1"/>
        </item>
        <item>
         <widget class="QLabel" name="label_3">
@@ -105,7 +105,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_4"/>
+        <widget class="QSpinBox" name="spinBox_X2"/>
        </item>
        <item>
         <widget class="QLabel" name="label_4">
@@ -118,7 +118,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_5">
+        <widget class="QSpinBox" name="spinBox_Y2">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -174,7 +174,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
-         <widget class="QwtPlot" name="widget_2" native="true"/>
+         <widget class="QwtPlot" name="l_plot" native="true"/>
         </item>
        </layout>
       </widget>
@@ -184,7 +184,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="0" column="0">
-         <widget class="QwtPlot" name="widget_4" native="true"/>
+         <widget class="QwtPlot" name="m_plot" native="true"/>
         </item>
        </layout>
       </widget>
@@ -194,7 +194,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="MainWidget" name="widget_3" native="true"/>
+         <widget class="MainWidget" name="widget_3d" native="true"/>
         </item>
        </layout>
       </widget>

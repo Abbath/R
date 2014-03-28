@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QtCore>
 #include <QtGui>
-#include <helpers.hpp>
 #include <QtConcurrent/QtConcurrent>
 #include <QFileDialog>
 
@@ -24,16 +23,13 @@ public:
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
-    void wheelEvent(QWheelEvent *e);
     void open(QString filename);
     void loadImage(QImage _image);
     void readConfig(QString confname);
 
-    void setThreshold(int v);
     QSize getSize(){ return image.size(); }
     void saveBounds();
     void saveResults();
-    //int getThreshold(){return (int)threshold;}
     QImage getImage() { return image;}
     QRect getRect(){return bounds;}
  
@@ -52,7 +48,6 @@ public:
 private:
     QVector<int> res;
     QVector<double> resm;
-    //QRgb tre() const { return qRgb(threshold, threshold, threshold); }
     //int scan(QVector<Point>& v);
     Ui::ImageArea *ui;
     QImage image, pix;
@@ -64,7 +59,6 @@ signals:
     void rectChanged(QRect r);
     void graph(const QVector<int> &v);
     void graph(const QVector<double> &v);
-    void displayChanged(Display dis);
 };
 
 #endif // IMAGEAREA_HPP

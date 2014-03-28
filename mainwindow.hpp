@@ -6,7 +6,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <imagearea.hpp>
-#include <videoprocessor.h>
+#include <processor.hpp>
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>
@@ -50,6 +50,8 @@ private slots:
  //   void on_horizontalSlider_2_valueChanged(int value);
 
     void on_actionStop_triggered();
+signals:
+    void stop();
 
 private:
     QwtPlotPanner *pan;
@@ -63,11 +65,10 @@ private:
     QwtPlotCurve curve1;
     
     Ui::MainWindow *ui;
-    VideoProcessor *vp;
+    Processor *vp;
 
+    QString filename;
     QString fileNameV;
-signals:
-    void stop();
 };
 
 #endif // MAINWINDOW_HPP

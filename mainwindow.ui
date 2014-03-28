@@ -164,7 +164,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
-         <widget class="ImageArea" name="widget" native="true"/>
+         <widget class="ImageArea" name="imagearea" native="true"/>
         </item>
        </layout>
       </widget>
@@ -307,7 +307,7 @@
      <x>0</x>
      <y>0</y>
      <width>655</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
   </widget>
@@ -463,7 +463,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>widget</sender>
+   <sender>imagearea</sender>
    <signal>rectChanged(QRect)</signal>
    <receiver>MainWindow</receiver>
    <slot>setBounds(QRect)</slot>

@@ -1,18 +1,18 @@
-#include "videoprocessor.h"
+#include "processor.hpp"
 #include <fstream>
-unsigned int VideoProcessor::qrgbToGray(QRgb rgb)
+unsigned int Processor::qrgbToGray(QRgb rgb)
 {
     QColor color(rgb);
     return (color.red()+color.green()+color.blue())/3;
 }
 
-VideoProcessor::VideoProcessor(QObject *parent)
+Processor::Processor(QObject *parent)
 {
     Q_UNUSED(parent)
     setAutoDelete(false);
 }
 
-void VideoProcessor::run()
+void Processor::run()
 {
     std::ofstream f("log1.txt");
     QVector<int> res;
@@ -45,9 +45,8 @@ void VideoProcessor::run()
     emit graphM(resm);
 }
 
-QPair<int,double> VideoProcessor::processImage(QImage _image)
+QPair<int,double> Processor::processImage(QImage _image)
 {
-    std::ofstream f("log.txt");
     int counter = 0;
     double sum = 0.0;
     QImage image = _image;
@@ -110,7 +109,7 @@ QPair<int,double> VideoProcessor::processImage(QImage _image)
     return res;
 }
 
-QImage VideoProcessor::IplImage2QImage(const IplImage *iplImage)
+QImage Processor::IplImage2QImage(const IplImage *iplImage)
 {
     int height = iplImage->height;
     int width = iplImage->width;
@@ -120,7 +119,7 @@ QImage VideoProcessor::IplImage2QImage(const IplImage *iplImage)
     return img.rgbSwapped();
 }
 
-void VideoProcessor::stopThis()
+void Processor::stopThis()
 {
     stop = true;
 }

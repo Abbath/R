@@ -17,16 +17,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     imagearea.cpp \
-    converter.cpp \
     mainwidget.cpp \
-    videoprocessor.cpp
+    processor.cpp
 
 HEADERS  += mainwindow.hpp \
     imagearea.hpp \
-    converter.hpp \
     helpers.hpp \
     mainwidget.hpp \
-    videoprocessor.h
+    processor.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

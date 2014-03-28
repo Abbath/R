@@ -5,7 +5,6 @@
 #include <QtCore>
 #include <QtGui>
 #include <helpers.hpp>
-#include <converter.hpp>
 #include <QtConcurrent/QtConcurrent>
 #include <QFileDialog>
 
@@ -27,44 +26,38 @@ public:
     void mouseMoveEvent(QMouseEvent *e);
     void wheelEvent(QWheelEvent *e);
     void open(QString filename);
-    int openVideo();
+    void loadImage(QImage _image);
+    void readConfig(QString confname);
 
-    void set3D();
     void setThreshold(int v);
-    void run();
     QSize getSize(){ return image.size(); }
     void saveBounds();
     void saveResults();
-    void getFrame(int n);
-    int getThreshold(){return (int)threshold;}
+    //int getThreshold(){return (int)threshold;}
     QImage getImage() { return image;}
-    QRect getRect(){return QRect(x1<x2 ? x1 : x2, y1<y2 ? y1 : y2,abs(x1-x2), abs(y1-y2));}
+    QRect getRect(){return bounds;}
+ 
+    int x1(){ return bounds.left(); }
+    int x2(){ return bounds.right(); }
+    int y1(){ return bounds.top(); }
+    int y2(){ return bounds.bottom(); }
+    
+    void setX1(int _x1){ bounds.setLeft(_x1); }
+    void setX2(int _x2){ bounds.setRight(_x2); }
+    void setY1(int _y1){ bounds.setTop(_y1); }
+    void setY2(int _y2){ bounds.setBottom(_y2); }
+    
     ~ImageArea();
 
 private:
     QVector<int> res;
     QVector<double> resm;
-    QRgb tre() const { return qRgb(threshold, threshold, threshold); }
-    int scan(QVector<Point>& v);
+    //QRgb tre() const { return qRgb(threshold, threshold, threshold); }
+    //int scan(QVector<Point>& v);
     Ui::ImageArea *ui;
     QImage image, pix;
-    QVector<Point> points;
-    bool rect, d3, vid = false;
-
-    quint32 x1=0, y1=0, x2=0, y2=0, cc;
-    quint8 threshold;
-
-    Image im;
-    Converter converter;
-    QString fileNameV;
-    QVector<QString> fileNames;
-    int frame_num, counter;
-    qreal mean;
-public:
-    void setX1(quint32 x){ x1 = x; repaint();}
-    void setY1(quint32 y){ y1 = y; repaint();}
-    void setX2(quint32 x){ x2 = x; repaint();}
-    void setY2(quint32 y){ y2 = y; repaint();}
+    bool rect;
+    QRect bounds;
 public slots:
     void frameChanged(QImage _image);
 signals:

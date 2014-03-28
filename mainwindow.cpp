@@ -35,9 +35,8 @@ MainWindow::MainWindow(QWidget *parent) :
     mag = new QwtPlotMagnifier(ui->widget_2->canvas());
     zoom = new QwtPlotZoomer(ui->widget_2->canvas());
     zoom->setRubberBandPen(QPen(Qt::white));
-    QPen pen = QPen( Qt::red );
     curve.setRenderHint( QwtPlotItem::RenderAntialiased );
-    curve.setPen( pen );
+    curve.setPen( QPen( Qt::red ) );
     curve.attach( ui->widget_2 );
     
     ui->widget_4->setTitle("Lights mean");
@@ -48,25 +47,25 @@ MainWindow::MainWindow(QWidget *parent) :
     //pan1 = new QwtPlotPanner(ui->widget_4->canvas());
     mag1 = new QwtPlotMagnifier(ui->widget_4->canvas());
     zoom1 = new QwtPlotZoomer(ui->widget_4->canvas());
-    zoom1->setRubberBandPen(QPen(Qt::white));
-    QPen pen1 = QPen( Qt::red );
+    zoom1->setRubberBandPen( QPen( Qt::white ) );
     curve1.setRenderHint( QwtPlotItem::RenderAntialiased );
-    curve1.setPen( pen1 );
+    curve1.setPen( QPen( Qt::red ) );
     curve1.attach( ui->widget_4 );
     
-    vp = new VideoProcessor();
-
-
+    vp = new Processor();
+    
+    ui->imagearea->readConfig("bounds.conf");
+    
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<QVector<double>>("QVector<double>");
-
+    
     connect(vp, SIGNAL(graphL(QVector<int>)), this, SLOT(displayResultsL(QVector<int>)),Qt::QueuedConnection);
     connect(vp, SIGNAL(graphM(QVector<double>)), this, SLOT(displayResultsM(QVector<double>)),Qt::QueuedConnection);
-
-    connect(ui->widget, SIGNAL(displayChanged(Display)), this, SLOT(setDisplay(Display)));
-    connect(ui->widget, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
-
-    connect(vp, SIGNAL(frameChanged(QImage)),ui->widget, SLOT(frameChanged(QImage)),Qt::QueuedConnection);
+    
+    connect(ui->imagearea, SIGNAL(displayChanged(Display)), this, SLOT(setDisplay(Display)));
+    connect(ui->imagearea, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
+    
+    connect(vp, SIGNAL(frameChanged(QImage)),ui->imagearea, SLOT(frameChanged(QImage)),Qt::QueuedConnection);
     connect(this, SIGNAL(stop()), vp, SLOT(stopThis()),Qt::QueuedConnection);
     //ui->horizontalSlider_2->hide();
 }
@@ -78,12 +77,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::setDisplay(Display dis)
 {
-    ui->label_top->setNum(static_cast<int>(dis.miny));
-    ui->label_bot->setNum(static_cast<int>(dis.maxy));
-    ui->label_left->setNum(static_cast<int>(dis.minx));
-    ui->label_right->setNum(static_cast<int>(dis.maxx));
-    ui->label_light->setNum(static_cast<int>(dis.sum));
-    ui->label_mean->setNum(static_cast<double>(dis.mean));
+    ui->label_top->setNum(dis.miny);
+    ui->label_bot->setNum(dis.maxy);
+    ui->label_left->setNum(dis.minx);
+    ui->label_right->setNum(dis.maxx);
+    ui->label_light->setNum(dis.sum);
+    ui->label_mean->setNum(dis.mean);
 }
 
 void MainWindow::on_horizontalSlider_valueChanged(int value)
@@ -91,26 +90,29 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     if(ui->action3D->isChecked()){
         ui->widget_3->setStep((float)value/255.0);
     }
-    ui->widget->setThreshold(value);
+    ui->imagearea->setThreshold(value);
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
-    const QString fileName = QFileDialog::getOpenFileName( this, tr("Open image file"), "", tr("Image files (*.bmp)"));
-    QImage image(fileName);
+    filename = QFileDialog::getOpenFileName( this, tr("Open image file"), "", tr("Image files (*.bmp)"));
+    QImage image(filename);
     ui->spinBox_2->setMaximum(image.width());
     ui->spinBox_3->setMaximum(image.height());
     ui->spinBox_4->setMaximum(image.width());
     ui->spinBox_5->setMaximum(image.height());
-    ui->widget->open(fileName);
+    vp->setThreshold(ui->spinBox->value());
+    vp->setRect(ui->imagearea->getRect());
+    vp->processImage(image);
+    ui->imagearea->open(filename);
     //ui->horizontalSlider_2->hide();
 }
 
 void MainWindow::on_action3D_triggered(bool checked)
 {
     if(checked){
-        ui->widget_3->setStep((float)ui->widget->getThreshold()/255.0);
-        ui->widget_3->setImage(ui->widget->getImage().copy(ui->widget->getRect()));
+        ui->widget_3->setStep((float)ui->spinBox->value()/255.0);
+        ui->widget_3->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
     }else{
         QImage empty;
         ui->widget_3->setStep(1.0f);
@@ -132,7 +134,7 @@ void MainWindow::on_action3D_triggered(bool checked)
 
 void MainWindow::on_actionSave_Bounds_triggered()
 {
-    ui->widget->saveBounds();
+    ui->imagearea->saveBounds();
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -151,29 +153,36 @@ void MainWindow::setBounds(QRect rect)
     ui->spinBox_4->setValue(rect.right());
     ui->spinBox_5->setValue(rect.bottom());
     if(ui->action3D->isChecked()){
-        ui->widget_3->setStep((float)ui->widget->getThreshold()/255.0);
-        ui->widget_3->setImage(ui->widget->getImage().copy(ui->widget->getRect()));
+        ui->widget_3->setStep((float)ui->spinBox->value()/255.0);
+        ui->widget_3->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+    }
+    vp->setThreshold(ui->spinBox->value());
+    vp->setRect(rect);
+    
+    if(!filename.isNull()){
+        QImage image(filename);
+        vp->processImage(image);
     }
 }
 
 void MainWindow::on_spinBox_2_valueChanged(int arg1)
 {
-    ui->widget->setX1(arg1);
+    ui->imagearea->setX1(arg1);
 }
 
 void MainWindow::on_spinBox_3_valueChanged(int arg1)
 {
-    ui->widget->setY1(arg1);
+    ui->imagearea->setY1(arg1);
 }
 
 void MainWindow::on_spinBox_4_valueChanged(int arg1)
 {
-    ui->widget->setX2(arg1);
+    ui->imagearea->setX2(arg1);
 }
 
 void MainWindow::on_spinBox_5_valueChanged(int arg1)
 {
-    ui->widget->setY2(arg1);
+    ui->imagearea->setY2(arg1);
 }
 
 
@@ -188,6 +197,7 @@ void MainWindow::on_actionSetup_triggered(bool checked)
 
 void MainWindow::on_actionOpen_Video_triggered()
 {
+    filename.clear();
     fileNameV = QFileDialog::getOpenFileName( this, tr("Open data file"), "", tr("Video files (*.avi)"));
     CvCapture * capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
     if(!capture)
@@ -197,7 +207,7 @@ void MainWindow::on_actionOpen_Video_triggered()
         vp->setFilename(fileNameV);
         IplImage* frame = cvQueryFrame(capture);
         QImage image = vp->IplImage2QImage(frame);
-        ui->widget->frameChanged(image);
+        ui->imagearea->loadImage(image.mirrored(false,true));
     }
 }
 
@@ -243,8 +253,8 @@ void MainWindow::displayResultsM(const QVector<double> &res)
 void MainWindow::on_actionRun_triggered()
 {
     if(!fileNameV.isNull()){
-        vp->setThreshold(ui->widget->getThreshold());
-        vp->setRect(ui->widget->getRect());
+        vp->setThreshold(ui->spinBox->value());
+        vp->setRect(ui->imagearea->getRect());
         QThreadPool::globalInstance()->start(vp);
     }
 }
@@ -257,7 +267,7 @@ void MainWindow::on_actionRun_triggered()
 
 void MainWindow::on_actionSave_triggered()
 {
-    ui->widget->saveResults();
+    ui->imagearea->saveResults();
 }
 
 void MainWindow::on_actionStop_triggered()

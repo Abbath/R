@@ -79,6 +79,18 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
     if(ui->action3D->isChecked()){
         ui->widget_3d->setStep((float)value/255.0);
+    }else{
+        vp->setThreshold(value);
+        if(!filename.isNull()){
+            QImage image(filename);
+            QPair<int, double> id = vp->processImage(image);
+            ui->label_light->setNum(id.first);
+            ui->label_mean->setNum(id.second);
+        }else{
+            QPair<int,double> id = vp->processImage(ui->imagearea->getImage());
+            ui->label_light->setNum(id.first);
+            ui->label_mean->setNum(id.second);
+        }
     }
 }
 
@@ -150,6 +162,10 @@ void MainWindow::setBounds(QRect rect)
         QPair<int, double> id = vp->processImage(image);
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second); 
+    }else{
+        QPair<int,double> id = vp->processImage(ui->imagearea->getImage());
+        ui->label_light->setNum(id.first);
+        ui->label_mean->setNum(id.second);
     }
 }
 

@@ -1,6 +1,7 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include <qwt_scale_draw.h>
+#include <iostream>
 
 /*!
  * \brief MainWindow::MainWindow
@@ -15,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent) :
     this->showMaximized();
     
     ui->groupBox->hide();
+    ui->progressBar->hide();
+    ui->label_8->hide();
     ui->l_plot->setTitle("Lights");
     ui->l_plot->setAxisTitle(ui->l_plot->xBottom, "Frame");
     ui->l_plot->setAxisTitle(ui->l_plot->yLeft,"Points");
@@ -55,12 +58,15 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<QVector<double>>("QVector<double>");
     
-    connect(vp, SIGNAL(graphL(QVector<int>)), this, SLOT(displayResultsL(QVector<int>)),Qt::QueuedConnection);
-    connect(vp, SIGNAL(graphM(QVector<double>)), this, SLOT(displayResultsM(QVector<double>)),Qt::QueuedConnection);
+    connect(vp, SIGNAL(graphL(QVector<int>,QVector<double>)), this, SLOT(displayResultsL(QVector<int>,QVector<double>)),Qt::QueuedConnection);
+    connect(vp, SIGNAL(graphM(QVector<double>,QVector<double>)), this, SLOT(displayResultsM(QVector<double>,QVector<double>)),Qt::QueuedConnection);
     
     connect(vp, SIGNAL(frameChanged(QImage)),ui->imagearea, SLOT(frameChanged(QImage)),Qt::QueuedConnection);
     connect(this, SIGNAL(stop()), vp, SLOT(stopThis()),Qt::QueuedConnection);
-    connect(vp, SIGNAL(maxMinBounds(QRect)),this, SLOT(setMaxMinBounds(QRect)));
+    connect(vp, SIGNAL(maxMinBounds(QRect)),this, SLOT(setMaxMinBounds(QRect)),Qt::QueuedConnection);
+    connect(vp, SIGNAL(progress(int)), this,SLOT(progress(int)), Qt::QueuedConnection);
+    connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
+    this->showFullScreen();
 }
 
 /*!
@@ -119,14 +125,15 @@ void MainWindow::on_actionOpen_triggered()
  */
 void MainWindow::on_action3D_triggered(bool checked)
 {
-    if(checked){
+    /*if(checked){
         ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
         ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+        std::cout << ui->imagearea->getImage().width();
     }else{
         QImage empty;
         ui->widget_3d->setStep(1.0f);
         ui->widget_3d->setImage(empty);
-    }
+    }*/
 }
 
 /*!
@@ -248,9 +255,9 @@ void MainWindow::on_actionOpen_Video_triggered()
  * \brief MainWindow::displayResultsL
  * \param res
  */
-void MainWindow::displayResultsL(const QVector<int> &res)
+void MainWindow::displayResultsL(const QVector<int> &res, const QVector<double> &t)
 {
-    
+    this->res = res;
     ui->l_plot->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
     ui->l_plot->replot();
     
@@ -259,7 +266,7 @@ void MainWindow::displayResultsL(const QVector<int> &res)
     auto pointsIt = points.begin();
     
     for ( auto ri = res.constBegin(); ri != res.constEnd(); ++ ri, ++ pointsIt, ++ counter ) {
-        (*pointsIt) = QPointF( counter, (*ri) );
+        (*pointsIt) = QPointF( t[counter], (*ri) );
     }
     
     QwtPointSeriesData * data = new QwtPointSeriesData(points);
@@ -272,8 +279,9 @@ void MainWindow::displayResultsL(const QVector<int> &res)
  * \brief MainWindow::displayResultsM
  * \param res
  */
-void MainWindow::displayResultsM(const QVector<double> &res)
+void MainWindow::displayResultsM(const QVector<double> &res, const QVector<double> &t)
 {
+    this->resm = res;
     ui->m_plot->detachItems( QwtPlotItem::Rtti_PlotCurve, false );
     ui->m_plot->replot();
     
@@ -282,7 +290,7 @@ void MainWindow::displayResultsM(const QVector<double> &res)
     auto pointsIt = points.begin();
     
     for ( auto ri = res.constBegin(); ri != res.constEnd(); ++ ri, ++ pointsIt, ++ counter ) {
-        (*pointsIt) = QPointF( counter, (*ri) );
+        (*pointsIt) = QPointF( t[counter], (*ri) );
     }
     
     QwtPointSeriesData * data = new QwtPointSeriesData(points);
@@ -296,6 +304,8 @@ void MainWindow::displayResultsM(const QVector<double> &res)
  */
 void MainWindow::on_actionRun_triggered()
 {
+    ui->progressBar->show();
+    ui->label_8->show();
     if(!fileNameV.isNull()){
         vp->setThreshold(ui->spinBox->value());
         vp->setRect(ui->imagearea->getRect());
@@ -308,7 +318,17 @@ void MainWindow::on_actionRun_triggered()
  */
 void MainWindow::on_actionSave_triggered()
 {
-    ui->imagearea->saveResults();
+    // ui->imagearea->saveResults();
+    QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Data (*.dat)");
+    QFile file(name);
+    if(file.open(QFile::WriteOnly)){
+        QTextStream str(&file);
+        for(int i = 0 ; i < res.size(); ++i){
+            str << i << " " << res[i] << " " << resm[i] << '\n';
+        }
+    }else{
+        qDebug() << "Can not open file for writing!";
+    }
 }
 
 /*!
@@ -317,4 +337,37 @@ void MainWindow::on_actionSave_triggered()
 void MainWindow::on_actionStop_triggered()
 {
     emit stop();
+}
+
+void MainWindow::progress(int value)
+{
+    ui->progressBar->setValue(value);
+    if(value == 100){
+        ui->progressBar->hide();
+        ui->label_8->hide();
+    }
+}
+
+void MainWindow::time(double value)
+{
+    if(value < 60){
+        ui->label_8->setText(QString::number(value,'g',2)+"s");
+    }else if(value < 3600){
+        ui->label_8->setText(QString::number((int)value/60)+"m"+QString::number((int)value%60)+"s");
+    }
+}
+
+void MainWindow::on_spinBox_2_valueChanged(int arg1)
+{
+    vp->setStart(arg1);
+}
+
+void MainWindow::on_spinBox_3_valueChanged(int arg1)
+{
+    vp->setEnd(arg1);
+}
+
+void MainWindow::on_actionQuit_triggered()
+{
+    this->close();
 }

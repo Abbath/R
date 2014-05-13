@@ -11,6 +11,26 @@ unsigned int Processor::qrgbToGray(QRgb rgb)
     QColor color(rgb);
     return (color.red()+color.green()+color.blue())/3;
 }
+unsigned int Processor::getEnd() const
+{
+    return end;
+}
+
+void Processor::setEnd(unsigned int value)
+{
+    end = value;
+}
+
+unsigned int Processor::getStart() const
+{
+    return start;
+}
+
+void Processor::setStart(unsigned int value)
+{
+    start = value;
+}
+
 
 /*!
  * \brief Processor::Processor
@@ -29,7 +49,7 @@ void Processor::run()
 {
     std::ofstream f("log1.txt");
     QVector<int> res;
-    QVector<double> resm;
+    QVector<double> resm,t;
     CvCapture * capture = cvCaptureFromAVI(filename.toStdString().c_str());
     if(!capture)
     {
@@ -39,7 +59,23 @@ void Processor::run()
     IplImage* frame = NULL;
     res.clear();
     resm.clear();
-    while ((frame = cvQueryFrame(capture))) {
+    int frameNumbers = (int) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_COUNT);
+    int fps = (int) cvGetCaptureProperty(capture, CV_CAP_PROP_FPS);
+    int i = 0;
+    if(start == -1){
+        start = 0;
+    }
+    if(end == -1){
+        end = frameNumbers;
+    }
+    for(int j = 0; j < start; ++j,++i){
+        cvGrabFrame(capture);
+    }
+    for(int k = start; k < end; k++){
+        frame = cvQueryFrame(capture);
+        if(!frame){
+            break;
+        }
         if(stop){
             stop = false;
             break;
@@ -48,11 +84,18 @@ void Processor::run()
         QPair<int,double> pr = processImage(image);
         res.push_back(pr.first);
         resm.push_back(pr.second);
+        i++;
+        if(!(i%(frameNumbers/100))){
+            emit progress(i/(frameNumbers/100));
+        }
+        emit time(i/(double)fps);
+        t.push_back(i/(double)fps);
         QThread::currentThread()->usleep(500);
     }
+    emit progress(100);
     cvReleaseCapture(&capture);
-    emit graphL(res);
-    emit graphM(resm);
+    emit graphL(res,t);
+    emit graphM(resm,t);
 }
 
 /*!

@@ -18,11 +18,19 @@ public:
     void run();
     QImage IplImage2QImage(const IplImage *iplImage);
     QPair<int, double> processImage(QImage _image);
+    unsigned int getStart() const;
+    void setStart(unsigned int value);
+    
+    unsigned int getEnd() const;
+    void setEnd(unsigned int value);
+    
 signals:
     void frameChanged(QImage frame);
     void maxMinBounds(QRect rect);
-    void graphL(const QVector<int> &v);
-    void graphM(const QVector<double> &v);
+    void progress(int);
+    void time(double);
+    void graphL(const QVector<int> &v, const QVector<double>&v0);
+    void graphM(const QVector<double> &v, const QVector<double>&v0);
 public slots:
     void stopThis();
 private:
@@ -31,6 +39,7 @@ private:
     QString filename;
     QRect rect;
     unsigned int threshold = 255;
+    int start = -1, end = -1;
     volatile bool stop = false;
 };
 

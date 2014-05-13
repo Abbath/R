@@ -181,6 +181,8 @@ void ImageArea::saveResults()
         for(int i = 0 ; i < res.size(); ++i){
             str << i << " " << res[i] << " " << resm[i] << '\n';
         }
+    }else{
+        qDebug() << "Can not open file for writing!";
     }
 }
 

@@ -7,8 +7,6 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QFileDialog>
 
-
-
 namespace Ui {
 class ImageArea;
 }
@@ -30,7 +28,7 @@ public:
     QSize getSize(){ return image.size(); }
     void saveBounds();
     void saveResults();
-    QImage getImage() { return image;}
+    QImage getImage() { if(image.isNull()) return pix; else return image;}
     QRect getRect(){return bounds;}
  
     int x1(){ return bounds.left(); }

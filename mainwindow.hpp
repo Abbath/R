@@ -38,15 +38,25 @@ private slots:
     void on_spinBox_Y2_valueChanged(int arg1);
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
-    void displayResultsL(const QVector<int> &res);
-    void displayResultsM(const QVector<double> &res);
+    void displayResultsL(const QVector<int> &res,const QVector<double> &t);
+    void displayResultsM(const QVector<double> &res,const QVector<double> &t);
     void on_actionRun_triggered();
     void on_actionSave_triggered();
-    void on_actionStop_triggered();
+    void on_actionStop_triggered();  
+    void progress(int value);
+    void time(double value);
+    void on_spinBox_2_valueChanged(int arg1);
+    
+    void on_spinBox_3_valueChanged(int arg1);
+    
+    void on_actionQuit_triggered();
+    
 signals:
     void stop();
 
 private:
+    QVector<int> res;
+    QVector<double> resm;
     QwtPlotMagnifier *mag;
     QwtPlotZoomer *zoom;
     QwtPlotCurve curve;

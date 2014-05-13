@@ -357,12 +357,12 @@ void MainWindow::time(double value)
     }
 }
 
-void MainWindow::on_spinBox_2_valueChanged(int arg1)
+void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)
 {
     vp->setStart(arg1);
 }
 
-void MainWindow::on_spinBox_3_valueChanged(int arg1)
+void MainWindow::on_doubleSpinBox_3_valueChanged(double arg1)
 {
     vp->setEnd(arg1);
 }

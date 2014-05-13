@@ -18,11 +18,11 @@ public:
     void run();
     QImage IplImage2QImage(const IplImage *iplImage);
     QPair<int, double> processImage(QImage _image);
-    unsigned int getStart() const;
-    void setStart(unsigned int value);
+    double getStart() const;
+    void setStart(double value);
     
-    unsigned int getEnd() const;
-    void setEnd(unsigned int value);
+    double getEnd() const;
+    void setEnd(double value);
     
 signals:
     void frameChanged(QImage frame);
@@ -39,7 +39,7 @@ private:
     QString filename;
     QRect rect;
     unsigned int threshold = 255;
-    int start = -1, end = -1;
+    double start = -1, end = -1;
     volatile bool stop = false;
 };
 

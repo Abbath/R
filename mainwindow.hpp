@@ -45,9 +45,9 @@ private slots:
     void on_actionStop_triggered();  
     void progress(int value);
     void time(double value);
-    void on_spinBox_2_valueChanged(int arg1);
+    void on_doubleSpinBox_2_valueChanged(double arg1);
     
-    void on_spinBox_3_valueChanged(int arg1);
+    void on_doubleSpinBox_3_valueChanged(double arg1);
     
     void on_actionQuit_triggered();
     

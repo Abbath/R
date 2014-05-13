@@ -11,22 +11,22 @@ unsigned int Processor::qrgbToGray(QRgb rgb)
     QColor color(rgb);
     return (color.red()+color.green()+color.blue())/3;
 }
-unsigned int Processor::getEnd() const
+double Processor::getEnd() const
 {
     return end;
 }
 
-void Processor::setEnd(unsigned int value)
+void Processor::setEnd(double value)
 {
     end = value;
 }
 
-unsigned int Processor::getStart() const
+double Processor::getStart() const
 {
     return start;
 }
 
-void Processor::setStart(unsigned int value)
+void Processor::setStart(double value)
 {
     start = value;
 }
@@ -66,12 +66,12 @@ void Processor::run()
         start = 0;
     }
     if(end == -1){
-        end = frameNumbers;
+        end = frameNumbers/(double)fps;
     }
-    for(int j = 0; j < start; ++j,++i){
+    for(int j = 0; j < int(start*fps); ++j,++i){
         cvGrabFrame(capture);
     }
-    for(int k = start; k < end; k++){
+    for(int k = int(start*fps); k < int(end*fps); k++){
         frame = cvQueryFrame(capture);
         if(!frame){
             break;
@@ -85,8 +85,9 @@ void Processor::run()
         res.push_back(pr.first);
         resm.push_back(pr.second);
         i++;
-        if(!(i%(frameNumbers/100))){
-            emit progress(i/(frameNumbers/100));
+        int l = i - int(start*fps);
+        if(!(l%(int((end-start)*fps)/100))){
+            emit progress(l/(int((end-start)*fps)/100));
         }
         emit time(i/(double)fps);
         t.push_back(i/(double)fps);

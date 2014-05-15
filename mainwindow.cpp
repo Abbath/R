@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include <qwt_scale_draw.h>
 #include <iostream>
+#include <QFileDialog>
+#include <QMessageBox>
 
 /*!
  * \brief MainWindow::MainWindow
@@ -19,7 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->progressBar->hide();
     ui->label_8->hide();
     ui->l_plot->setTitle("Lights");
-    ui->l_plot->setAxisTitle(ui->l_plot->xBottom, "Frame");
+    ui->l_plot->setAxisTitle(ui->l_plot->xBottom, "Time [s]");
     ui->l_plot->setAxisTitle(ui->l_plot->yLeft,"Points");
     ui->l_plot->setAxisAutoScale( ui->l_plot->xBottom, true );
     ui->l_plot->setAxisAutoScale( ui->l_plot->yLeft, true );
@@ -31,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
     curve.attach( ui->l_plot );
     
     ui->m_plot->setTitle("Lights mean");
-    ui->m_plot->setAxisTitle(ui->m_plot->xBottom, "Frame");
+    ui->m_plot->setAxisTitle(ui->m_plot->xBottom, "Time [s]");
     ui->m_plot->setAxisTitle(ui->m_plot->yLeft,"Mean");
     ui->m_plot->setAxisAutoScale( ui->m_plot->xBottom, true );
     ui->m_plot->setAxisAutoScale( ui->m_plot->yLeft, true );
@@ -66,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(vp, SIGNAL(maxMinBounds(QRect)),this, SLOT(setMaxMinBounds(QRect)),Qt::QueuedConnection);
     connect(vp, SIGNAL(progress(int)), this,SLOT(progress(int)), Qt::QueuedConnection);
     connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
-    this->showFullScreen();
+    this->showMaximized();
 }
 
 /*!
@@ -84,7 +86,7 @@ MainWindow::~MainWindow()
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
     if(ui->action3D->isChecked()){
-        ui->widget_3d->setStep((float)value/255.0);
+        //ui->widget_3d->setStep((float)value/255.0);
     }else{
         vp->setThreshold(value);
         if(!filename.isNull()){
@@ -106,6 +108,7 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
 void MainWindow::on_actionOpen_triggered()
 {
     filename = QFileDialog::getOpenFileName( this, tr("Open image file"), "", tr("Image files (*.bmp)"));
+    if(filename.isEmpty())return;
     QImage image(filename);
     ui->spinBox_X1->setMaximum(image.width());
     ui->spinBox_Y1->setMaximum(image.height());
@@ -158,8 +161,8 @@ void MainWindow::setBounds(QRect rect)
     ui->spinBox_X2->setValue(rect.right());
     ui->spinBox_Y2->setValue(rect.bottom());
     if(ui->action3D->isChecked()){
-        ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
-        ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+    //    ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
+    //    ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
     }
     vp->setThreshold(ui->spinBox->value());
     vp->setRect(rect);
@@ -239,6 +242,7 @@ void MainWindow::on_actionOpen_Video_triggered()
 {
     filename.clear();
     fileNameV = QFileDialog::getOpenFileName( this, tr("Open data file"), "", tr("Video files (*.avi)"));
+    if(fileNameV.isEmpty()) return;
     CvCapture * capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
     if(!capture)
     {
@@ -247,6 +251,10 @@ void MainWindow::on_actionOpen_Video_triggered()
         vp->setFilename(fileNameV);
         IplImage* frame = cvQueryFrame(capture);
         QImage image = vp->IplImage2QImage(frame);
+        ui->spinBox_X1->setMaximum(image.width());
+        ui->spinBox_Y1->setMaximum(image.height());
+        ui->spinBox_X2->setMaximum(image.width());
+        ui->spinBox_Y2->setMaximum(image.height());
         ui->imagearea->loadImage(image.mirrored(false,true));
     }
 }
@@ -327,7 +335,7 @@ void MainWindow::on_actionSave_triggered()
             str << i << " " << res[i] << " " << resm[i] << '\n';
         }
     }else{
-        qDebug() << "Can not open file for writing!";
+        QMessageBox::warning(this, "Warning!", "Can not open file for writing!");
     }
 }
 
@@ -350,11 +358,16 @@ void MainWindow::progress(int value)
 
 void MainWindow::time(double value)
 {
-    if(value < 60){
-        ui->label_8->setText(QString::number(value,'g',2)+"s");
-    }else if(value < 3600){
+    /*if(value < 60){*/
+        //ui->label_8->setText(QString::number(value,'g',2)+"s");
+    /*}else if(value < 3600){
         ui->label_8->setText(QString::number((int)value/60)+"m"+QString::number((int)value%60)+"s");
-    }
+    }*/
+    QString s = (int)value%60 < 10 ? "0"+QString::number((int)value%60) : QString::number((int)value%60);
+    QString m = (int)value%3600/60 < 10 ? "0"+ QString::number((int)value%3600/60) : QString::number((int)value%3600/60);
+    QString h = QString::number((int)value/3600);
+    //QString ms = QString::number((((double)(int)value)-value),'g',2);
+    ui->label_8->setText(h+":"+m+":"+s);
 }
 
 void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)

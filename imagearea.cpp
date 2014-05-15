@@ -1,6 +1,8 @@
 #include "imagearea.hpp"
 #include "ui_imagearea.h"
 
+#include <QMessageBox>
+
 /*!
  * \brief ImageArea::ImageArea
  * \param parent
@@ -145,33 +147,37 @@ void ImageArea::loadImage(QImage _image)
 void ImageArea::readConfig(QString confname)
 {
     QFile file(confname);
-    file.open(QFile::ReadOnly);
-    QTextStream str(&file);
-    int x1;
-    int y1;
-    int x2;
-    int y2;
-    str>> x1 >> y1 >> x2 >> y2;
-    setX1(x1);
-    setY1(y1);
-    setX2(x2);
-    setY2(y2);
+    if(file.open(QFile::ReadOnly)){
+        QTextStream str(&file);
+        int x1;
+        int y1;
+        int x2;
+        int y2;
+        str>> x1 >> y1 >> x2 >> y2;
+        setX1(x1);
+        setY1(y1);
+        setX2(x2);
+        setY2(y2);
+    }
 }
 
 /*!
- * \brief ImageArea::saveBounds
- */
+         * \brief ImageArea::saveBounds
+         */
 void ImageArea::saveBounds()
 {
     QFile file("bounds.conf");
-    file.open(QFile::WriteOnly | QFile::Truncate);
-    QTextStream str(&file);
-    str << x1() << "\n" << y1() << "\n" << x2() << "\n" << y2();
+    if(file.open(QFile::WriteOnly | QFile::Truncate)){
+        QTextStream str(&file);
+        str << x1() << "\n" << y1() << "\n" << x2() << "\n" << y2();
+    }else{
+        QMessageBox::warning(this, "Warning!", "Bounds can not be saved.");
+    }
 }
 
 /*!
- * \brief ImageArea::saveResults
- */
+         * \brief ImageArea::saveResults
+         */
 void ImageArea::saveResults()
 {
     QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Data (*.dat)");
@@ -182,14 +188,14 @@ void ImageArea::saveResults()
             str << i << " " << res[i] << " " << resm[i] << '\n';
         }
     }else{
-        qDebug() << "Can not open file for writing!";
+        QMessageBox::warning(this,"Warning", "Can not open file for writing!");
     }
 }
 
 /*!
- * \brief ImageArea::frameChanged
- * \param _image
- */
+         * \brief ImageArea::frameChanged
+         * \param _image
+         */
 void ImageArea::frameChanged(QImage _image)
 {
     pix = _image;

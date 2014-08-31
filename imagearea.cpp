@@ -7,15 +7,15 @@
  * \brief ImageArea::ImageArea
  * \param parent
  */
-ImageArea::ImageArea(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::ImageArea),
-    rect(true)
+ImageArea::ImageArea(QWidget* parent)
+    : QWidget(parent)
+    , ui(new Ui::ImageArea)
+    , rect(true)
 {
     setX1(0);
-    setX2(image.width()-1);
+    setX2(image.width() - 1);
     setY1(0);
-    setX2(image.height()-1);
+    setX2(image.height() - 1);
     ui->setupUi(this);
     update();
 }
@@ -32,32 +32,32 @@ ImageArea::~ImageArea()
  * \brief ImageArea::paintEvent
  * \param e
  */
-void ImageArea::paintEvent(QPaintEvent *e) {
+void ImageArea::paintEvent(QPaintEvent* e)
+{
     QPainter painter(this);
     painter.setPen(Qt::green);
-    if(!image.isNull()){
-        if(!rect) {
+    if (!image.isNull()) {
+        if (!rect) {
             painter.drawImage(0, 0, image);
             painter.drawRect(bounds);
             return;
-        }else{
-            
+        } else {
+
             painter.drawImage(0, 0, pix);
 
             painter.setPen(Qt::red);
-            
-            painter.drawLine(x1()-4,y1(),x1()+4,y1());
-            painter.drawLine(x1(),y1()-4,x1(),y1()+4);
-            
-            painter.drawLine(x2()-4,y2(),x2()+4,y2());
-            painter.drawLine(x2(),y2()-4,x2(),y2()+4);
-            
-            painter.drawLine(x2()-4,y1(),x2()+4,y1());
-            painter.drawLine(x2(),y1()-4,x2(),y1()+4);
-            
-            painter.drawLine(x1()-4,y2(),x1()+4,y2());
-            painter.drawLine(x1(),y2()-4,x1(),y2()+4);
-            
+
+            painter.drawLine(x1() - 4, y1(), x1() + 4, y1());
+            painter.drawLine(x1(), y1() - 4, x1(), y1() + 4);
+
+            painter.drawLine(x2() - 4, y2(), x2() + 4, y2());
+            painter.drawLine(x2(), y2() - 4, x2(), y2() + 4);
+
+            painter.drawLine(x2() - 4, y1(), x2() + 4, y1());
+            painter.drawLine(x2(), y1() - 4, x2(), y1() + 4);
+
+            painter.drawLine(x1() - 4, y2(), x1() + 4, y2());
+            painter.drawLine(x1(), y2() - 4, x1(), y2() + 4);
         }
     }
     e->accept();
@@ -67,16 +67,20 @@ void ImageArea::paintEvent(QPaintEvent *e) {
  * \brief ImageArea::mousePressEvent
  * \param e
  */
-void ImageArea::mousePressEvent(QMouseEvent *e)
+void ImageArea::mousePressEvent(QMouseEvent* e)
 {
-    if(e->button() == Qt::LeftButton){
+    if (e->button() == Qt::LeftButton) {
         rect = false;
         setX1(e->x());
         setY1(e->y());
-        if(e->x() < 0) setX1(0);
-        if(e->y() < 0) setY1(0);
-        if(e->x() >= image.width()) setX1(image.width()-1);
-        if(e->y() >= image.height()) setY1(image.height()-1);
+        if (e->x() < 0)
+            setX1(0);
+        if (e->y() < 0)
+            setY1(0);
+        if (e->x() >= image.width())
+            setX1(image.width() - 1);
+        if (e->y() >= image.height())
+            setY1(image.height() - 1);
     }
 }
 
@@ -84,15 +88,19 @@ void ImageArea::mousePressEvent(QMouseEvent *e)
  * \brief ImageArea::mouseReleaseEvent
  * \param e
  */
-void ImageArea::mouseReleaseEvent(QMouseEvent *e)
+void ImageArea::mouseReleaseEvent(QMouseEvent* e)
 {
-    if(e->button() == Qt::LeftButton){
+    if (e->button() == Qt::LeftButton) {
         setX2(e->x());
         setY2(e->y());
-        if(e->x() < 0) setX2(0);
-        if(e->y() < 0) setY2(0);
-        if(e->x() >= image.width()) setX2(image.width() - 1);
-        if(e->y() >= image.height()) setY2(image.height() - 1);
+        if (e->x() < 0)
+            setX2(0);
+        if (e->y() < 0)
+            setY2(0);
+        if (e->x() >= image.width())
+            setX2(image.width() - 1);
+        if (e->y() >= image.height())
+            setY2(image.height() - 1);
         rect = true;
         emit rectChanged(bounds);
         update();
@@ -103,18 +111,21 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *e)
  * \brief ImageArea::mouseMoveEvent
  * \param e
  */
-void ImageArea::mouseMoveEvent(QMouseEvent *e)
+void ImageArea::mouseMoveEvent(QMouseEvent* e)
 {
-    if(e->buttons() & Qt::LeftButton){
+    if (e->buttons() & Qt::LeftButton) {
         setX2(e->x());
         setY2(e->y());
-        if(e->x() < 0) setX2(0);
-        if(e->y() < 0) setY2(0);
-        if(e->x() > image.width()) setX2(image.width());
-        if(e->y() > image.height()) setY2(image.height());
+        if (e->x() < 0)
+            setX2(0);
+        if (e->y() < 0)
+            setY2(0);
+        if (e->x() > image.width())
+            setX2(image.width());
+        if (e->y() > image.height())
+            setY2(image.height());
         update();
-    }else{
-        
+    } else {
     }
 }
 
@@ -147,13 +158,13 @@ void ImageArea::loadImage(QImage _image)
 void ImageArea::readConfig(QString confname)
 {
     QFile file(confname);
-    if(file.open(QFile::ReadOnly)){
+    if (file.open(QFile::ReadOnly)) {
         QTextStream str(&file);
         int x1;
         int y1;
         int x2;
         int y2;
-        str>> x1 >> y1 >> x2 >> y2;
+        str >> x1 >> y1 >> x2 >> y2;
         setX1(x1);
         setY1(y1);
         setX2(x2);
@@ -167,10 +178,10 @@ void ImageArea::readConfig(QString confname)
 void ImageArea::saveBounds()
 {
     QFile file("bounds.conf");
-    if(file.open(QFile::WriteOnly | QFile::Truncate)){
+    if (file.open(QFile::WriteOnly | QFile::Truncate)) {
         QTextStream str(&file);
         str << x1() << "\n" << y1() << "\n" << x2() << "\n" << y2();
-    }else{
+    } else {
         QMessageBox::warning(this, "Warning!", "Bounds can not be saved.");
     }
 }
@@ -182,13 +193,13 @@ void ImageArea::saveResults()
 {
     QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Data (*.dat)");
     QFile file(name);
-    if(file.open(QFile::WriteOnly)){
+    if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
-        for(int i = 0 ; i < res.size(); ++i){
+        for (int i = 0; i < res.size(); ++i) {
             str << i << " " << res[i] << " " << resm[i] << '\n';
         }
-    }else{
-        QMessageBox::warning(this,"Warning", "Can not open file for writing!");
+    } else {
+        QMessageBox::warning(this, "Warning", "Can not open file for writing!");
     }
 }
 
@@ -267,5 +278,3 @@ void ImageArea::frameChanged(QImage _image)
 //    }
 //    return c;
 //}
-
-

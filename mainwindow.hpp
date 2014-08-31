@@ -12,6 +12,8 @@
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_magnifier.h>
 #include <qwt_plot_panner.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 
 namespace Ui {

@@ -72,6 +72,7 @@ private:
 
     QString filename;
     QString fileNameV;
+    void initPlot(QwtPlot *plot, QwtPlotMagnifier *mag, QwtPlotZoomer *zoom, QwtPlotCurve &curve, QString title, QString xlabel, QString ylabel);
 };
 
 #endif // MAINWINDOW_HPP

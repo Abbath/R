@@ -20,29 +20,9 @@ MainWindow::MainWindow(QWidget* parent)
     ui->groupBox->hide();
     ui->progressBar->hide();
     ui->label_8->hide();
-    ui->l_plot->setTitle("Lights");
-    ui->l_plot->setAxisTitle(ui->l_plot->xBottom, "Time [s]");
-    ui->l_plot->setAxisTitle(ui->l_plot->yLeft, "Points");
-    ui->l_plot->setAxisAutoScale(ui->l_plot->xBottom, true);
-    ui->l_plot->setAxisAutoScale(ui->l_plot->yLeft, true);
-    mag = new QwtPlotMagnifier(ui->l_plot->canvas());
-    zoom = new QwtPlotZoomer(ui->l_plot->canvas());
-    zoom->setRubberBandPen(QPen(Qt::white));
-    curve.setRenderHint(QwtPlotItem::RenderAntialiased);
-    curve.setPen(QPen(Qt::red));
-    curve.attach(ui->l_plot);
-
-    ui->m_plot->setTitle("Lights mean");
-    ui->m_plot->setAxisTitle(ui->m_plot->xBottom, "Time [s]");
-    ui->m_plot->setAxisTitle(ui->m_plot->yLeft, "Mean");
-    ui->m_plot->setAxisAutoScale(ui->m_plot->xBottom, true);
-    ui->m_plot->setAxisAutoScale(ui->m_plot->yLeft, true);
-    mag1 = new QwtPlotMagnifier(ui->m_plot->canvas());
-    zoom1 = new QwtPlotZoomer(ui->m_plot->canvas());
-    zoom1->setRubberBandPen(QPen(Qt::white));
-    curve1.setRenderHint(QwtPlotItem::RenderAntialiased);
-    curve1.setPen(QPen(Qt::red));
-    curve1.attach(ui->m_plot);
+   
+    initPlot(ui->l_plot, mag, zoom, curve, QString("Lights"), QString("Time [s]"), QString("Points"));
+    initPlot(ui->m_plot, mag1, zoom1, curve1, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
 
     vp = new Processor();
 
@@ -71,6 +51,21 @@ MainWindow::MainWindow(QWidget* parent)
     this->showMaximized();
 }
 
+
+void MainWindow::initPlot(QwtPlot* plot, QwtPlotMagnifier* mag, QwtPlotZoomer* zoom, QwtPlotCurve& curve, QString title, QString xlabel, QString ylabel) {
+    plot->setTitle(title);
+    plot->setAxisTitle(plot->xBottom, xlabel);
+    plot->setAxisTitle(plot->yLeft, ylabel);
+    plot->setAxisAutoScale(plot->xBottom, true);
+    plot->setAxisAutoScale(plot->yLeft, true);
+    mag = new QwtPlotMagnifier(plot->canvas());
+    zoom = new QwtPlotZoomer(plot->canvas());
+    zoom->setRubberBandPen(QPen(Qt::white));
+    curve.setRenderHint(QwtPlotItem::RenderAntialiased);
+    curve.setPen(QPen(Qt::red));
+    curve.attach(plot);
+}
+
 /*!
  * \brief MainWindow::~MainWindow
  */
@@ -94,10 +89,10 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
             QPair<int, double> id = vp->processImageCV(image);
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
-        } else {
-            //QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
-            //ui->label_light->setNum(id.first);
-            //ui->label_mean->setNum(id.second);
+        } else if(!fileNameV.isNull()){
+            QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
+            ui->label_light->setNum(id.first);
+            ui->label_mean->setNum(id.second);
         }
     }
 }

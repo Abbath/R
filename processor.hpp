@@ -48,6 +48,7 @@ private:
     cv::Mat QImage2Mat(const QImage &src);
     QImage Mat2QImage(const cv::Mat &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
+    QPair<int, double> processImageCVMat(cv::Mat &m);
 };
 
 #endif // VIDEOPROCESSOR_H

@@ -53,7 +53,16 @@ MainWindow::MainWindow(QWidget* parent)
     this->showMaximized();
 }
 
-
+/*!
+ * \brief MainWindow::initPlot
+ * \param plot
+ * \param mag
+ * \param zoom
+ * \param curve
+ * \param title
+ * \param xlabel
+ * \param ylabel
+ */
 void MainWindow::initPlot(QwtPlot* plot, QwtPlotMagnifier* mag, QwtPlotZoomer* zoom, QwtPlotCurve& curve, QString title, QString xlabel, QString ylabel) {
     plot->setTitle(title);
     plot->setAxisTitle(plot->xBottom, xlabel);
@@ -178,6 +187,10 @@ void MainWindow::setBounds(QRect rect)
     }
 }
 
+/*!
+ * \brief MainWindow::setMaxMinBounds
+ * \param rect
+ */
 void MainWindow::setMaxMinBounds(QRect rect)
 {
     if (!filename.isNull()) {
@@ -206,6 +219,10 @@ void MainWindow::on_spinBox_Y1_valueChanged(int arg1)
     ui->imagearea->setY1(arg1);
 }
 
+/*!
+ * \brief MainWindow::on_spinBox_X2_valueChanged
+ * \param arg1
+ */
 void MainWindow::on_spinBox_X2_valueChanged(int arg1)
 {
     ui->imagearea->setX2(arg1);
@@ -242,13 +259,15 @@ void MainWindow::on_actionOpen_Video_triggered()
     fileNameV = QFileDialog::getOpenFileName(this, tr("Open data file"), "", tr("Video files (*.avi)"));
     if (fileNameV.isEmpty())
         return;
-    CvCapture* capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
-    if (!capture) {
+    VideoCapture capture(fileNameV.toStdString().c_str());
+    //CvCapture* capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
+    if (!capture.isOpened()) {
         QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
     } else {
         vp->setFilename(fileNameV);
-        IplImage* frame = cvQueryFrame(capture);
-        QImage image = vp->IplImage2QImage(frame);
+        Mat frame;
+        capture.read(frame);
+        QImage image = vp->Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
@@ -345,6 +364,10 @@ void MainWindow::on_actionStop_triggered()
     emit stop();
 }
 
+/*!
+ * \brief MainWindow::progress
+ * \param value
+ */
 void MainWindow::progress(int value)
 {
     ui->progressBar->setValue(value);
@@ -354,6 +377,10 @@ void MainWindow::progress(int value)
     }
 }
 
+/*!
+ * \brief MainWindow::time
+ * \param value
+ */
 void MainWindow::time(double value)
 {
     /*if(value < 60){*/
@@ -368,21 +395,35 @@ void MainWindow::time(double value)
     ui->label_8->setText(h + ":" + m + ":" + s);
 }
 
+/*!
+ * \brief MainWindow::on_doubleSpinBox_2_valueChanged
+ * \param arg1
+ */
 void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)
 {
     vp->setStart(arg1);
 }
 
+/*!
+ * \brief MainWindow::on_doubleSpinBox_3_valueChanged
+ * \param arg1
+ */
 void MainWindow::on_doubleSpinBox_3_valueChanged(double arg1)
 {
     vp->setEnd(arg1);
 }
 
+/*!
+ * \brief MainWindow::on_actionQuit_triggered
+ */
 void MainWindow::on_actionQuit_triggered()
 {
     this->close();
 }
 
+/*!
+ * \brief MainWindow::detection
+ */
 void MainWindow::detection()
 {
     ui->label_8->setText("Detection...");

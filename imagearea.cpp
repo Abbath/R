@@ -28,6 +28,10 @@ ImageArea::~ImageArea()
     delete ui;
 }
 
+/*!
+ * \brief ImageArea::rectRecv
+ * \param rect
+ */
 void ImageArea::rectRecv(QRect rect)
 {
     bounds = rect;

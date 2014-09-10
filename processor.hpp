@@ -11,6 +11,9 @@
 
 using namespace cv;
 
+/*!
+ * \brief The Processor class
+ */
 class Processor : public QObject, public QRunnable
 {
     Q_OBJECT
@@ -20,7 +23,7 @@ public:
     void setThreshold(int _threshold){threshold = _threshold;}
     void setRect(QRect _rect){rect = _rect;}
     void run();
-    QImage IplImage2QImage(const IplImage *iplImage);
+    QImage Mat2QImage(const cv::Mat &src);
     QPair<int, double> processImage(QImage _image);
     QPair<int, double> processImageCV(QImage _image);
     double getStart() const;
@@ -49,7 +52,6 @@ private:
     double start = -1, end = -1;
     volatile bool stop = false;
     cv::Mat QImage2Mat(const QImage &src);
-    QImage Mat2QImage(const cv::Mat &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);
     QRect autoDetect();

@@ -10,7 +10,9 @@
 namespace Ui {
 class ImageArea;
 }
-
+/*!
+ * \brief The ImageArea class
+ */
 class ImageArea : public QWidget
 {
     Q_OBJECT

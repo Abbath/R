@@ -11,21 +11,38 @@ unsigned int Processor::qrgbToGray(QRgb rgb)
     QColor color(rgb);
     return (color.red() + color.green() + color.blue()) / 3;
 }
+
+/*!
+ * \brief Processor::getEnd
+ * \return 
+ */
 double Processor::getEnd() const
 {
     return end;
 }
 
+/*!
+ * \brief Processor::setEnd
+ * \param value
+ */
 void Processor::setEnd(double value)
 {
     end = value;
 }
 
+/*!
+ * \brief Processor::getStart
+ * \return 
+ */
 double Processor::getStart() const
 {
     return start;
 }
 
+/*!
+ * \brief Processor::setStart
+ * \param value
+ */
 void Processor::setStart(double value)
 {
     start = value;
@@ -165,13 +182,22 @@ QPair<int, double> Processor::processImage(QImage _image)
     return res;
 }
 
+/*!
+ * \brief Processor::processImageCV
+ * \param _image
+ * \return 
+ */
 QPair<int, double> Processor::processImageCV(QImage _image)
 {
     Mat m = QImage2Mat(_image);
     return processImageCVMat(m);
 }
 
-
+/*!
+ * \brief Processor::processImageCVMat
+ * \param m
+ * \return 
+ */
 QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
     Mat mm;
     m.copyTo(mm);
@@ -200,21 +226,6 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
 }
 
 /*!
-         * \brief Processor::IplImage2QImage
-         * \param iplImage
-         * \return 
-         */
-QImage Processor::IplImage2QImage(const IplImage* iplImage)
-{
-    int height = iplImage->height;
-    int width = iplImage->width;
-    
-    const uchar* qImageBuffer = (const uchar*)iplImage->imageData;
-    QImage img(qImageBuffer, width, height, QImage::Format_RGB888);
-    return img.rgbSwapped();
-}
-
-/*!
          * \brief Processor::stopThis
          */
 void Processor::stopThis()
@@ -222,6 +233,11 @@ void Processor::stopThis()
     stop = true;
 }
 
+/*!
+ * \brief Processor::Mat2QImage
+ * \param src
+ * \return 
+ */
 QImage Processor::Mat2QImage(cv::Mat const& src)
 {
     cv::Mat temp;
@@ -235,6 +251,11 @@ QImage Processor::Mat2QImage(cv::Mat const& src)
     return dest;
 }
 
+/*!
+ * \brief Processor::QImage2Mat
+ * \param src
+ * \return 
+ */
 cv::Mat Processor::QImage2Mat(QImage const& src)
 {
     cv::Mat tmp;
@@ -250,6 +271,12 @@ cv::Mat Processor::QImage2Mat(QImage const& src)
     return result;
 }
 
+/*!
+ * \brief Processor::mean
+ * \param image
+ * \param contour
+ * \return 
+ */
 double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
     typedef cv::vector<cv::Point> TContour;
     
@@ -274,6 +301,10 @@ double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
     return sum[0];
 }
 
+/*!
+ * \brief Processor::autoDetect
+ * \return 
+ */
 QRect Processor::autoDetect(){
     emit detection();
     VideoCapture capture(filename.toStdString().c_str());
@@ -331,4 +362,4 @@ QRect Processor::autoDetect(){
     emit rectChanged(rec);
     return rec;
 }
- 
+

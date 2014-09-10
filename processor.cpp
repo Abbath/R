@@ -174,7 +174,7 @@ QPair<int, double> Processor::processImageCV(QImage _image)
 QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
     Mat mm;
     m.copyTo(mm);
-    cv::threshold(m, m, threshold, 255, 0);
+    cv::threshold(m, m, threshold-1, 255, THRESH_BINARY);
     rect = rect.normalized();
     Rect r(rect.left(),  rect.top(), rect.width(),rect.height());
     m = m(r);

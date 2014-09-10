@@ -400,6 +400,7 @@
    <addaction name="actionQuit"/>
    <addaction name="separator"/>
    <addaction name="actionSetup"/>
+   <addaction name="actionAutodetection"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
@@ -482,6 +483,20 @@
    </property>
    <property name="shortcut">
     <string>Alt+X</string>
+   </property>
+  </action>
+  <action name="actionAutodetection">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Autodetection</string>
+   </property>
+   <property name="toolTip">
+    <string>Autodetection</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
    </property>
   </action>
  </widget>

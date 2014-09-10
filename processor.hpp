@@ -22,6 +22,7 @@ public:
     void setFilename(QString _filename){filename = _filename;}
     void setThreshold(int _threshold){threshold = _threshold;}
     void setRect(QRect _rect){rect = _rect;}
+    void setAd(bool _ad) { ad = _ad; }
     void run();
     QImage Mat2QImage(const cv::Mat &src);
     QPair<int, double> processImage(QImage _image);
@@ -51,6 +52,7 @@ private:
     unsigned int threshold = 255;
     double start = -1, end = -1;
     volatile bool stop = false;
+    bool ad = false;
     cv::Mat QImage2Mat(const QImage &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);

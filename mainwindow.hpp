@@ -30,6 +30,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 public slots:
+    void setProcessor(Processor * p) { vp = p; }
     void setBounds(QRect rect);
     void setMaxMinBounds(QRect rect);
 private slots:
@@ -51,11 +52,10 @@ private slots:
     void progress(int value);
     void time(double value);
     void on_doubleSpinBox_2_valueChanged(double arg1);
-    
     void on_doubleSpinBox_3_valueChanged(double arg1);
-    
     void on_actionQuit_triggered();
     void detection();
+    void on_actionAutodetection_triggered(bool checked);
     
 signals:
     void stop();

@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget* parent)
     initPlot(ui->l_plot, mag, zoom, curve, QString("Lights"), QString("Time [s]"), QString("Points"));
     initPlot(ui->m_plot, mag1, zoom1, curve1, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
 
-    vp = new Processor();
+    vp = new Processor;
 
     ui->imagearea->readConfig("bounds.conf");
     QRect r = ui->imagearea->getRect();
@@ -427,4 +427,9 @@ void MainWindow::on_actionQuit_triggered()
 void MainWindow::detection()
 {
     ui->label_8->setText("Detection...");
+}
+
+void MainWindow::on_actionAutodetection_triggered(bool checked)
+{
+    vp->setAd(checked);
 }

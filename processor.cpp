@@ -65,7 +65,9 @@ void Processor::run()
 {
     QVector<int> res;
     QVector<double> resm, t;
-    rect = autoDetect();
+    if(ad){
+        rect = autoDetect();
+    }
     VideoCapture capture(filename.toStdString().c_str());
     if (!capture.isOpened()) {
         QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");

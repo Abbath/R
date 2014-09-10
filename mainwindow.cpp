@@ -71,6 +71,7 @@ void MainWindow::initPlot(QwtPlot* plot, QwtPlotMagnifier* mag, QwtPlotZoomer* z
  */
 MainWindow::~MainWindow()
 {
+    vp->stopThis();
     delete ui;
 }
 

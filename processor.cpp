@@ -46,19 +46,18 @@ Processor::Processor(QObject* parent)
  */
 void Processor::run()
 {
-    std::ofstream f("log1.txt");
     QVector<int> res;
     QVector<double> resm, t;
-    CvCapture* capture = cvCaptureFromAVI(filename.toStdString().c_str());
-    if (!capture) {
-        QMessageBox::warning(0, "Error", "cvCaptureFromAVI failed (file not found?)\n");
+    VideoCapture capture(filename.toStdString().c_str());
+    if (!capture.isOpened()) {
+        QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
         return;
     }
-    IplImage* frame = NULL;
+    Mat frame;
     res.clear();
     resm.clear();
-    int frameNumbers = (int)cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_COUNT);
-    int fps = (int)cvGetCaptureProperty(capture, CV_CAP_PROP_FPS);
+    int frameNumbers = capture.get(CV_CAP_PROP_FRAME_COUNT);
+    int fps = capture.get(CV_CAP_PROP_FPS); 
     int i = 0;
     if (start == -1) {
         start = 0;
@@ -67,21 +66,21 @@ void Processor::run()
         end = frameNumbers / (double)fps;
     }
     for (int j = 0; j < int(start * fps); ++j, ++i) {
-        cvGrabFrame(capture);
+        if(!capture.grab()){
+            QMessageBox::warning(0, "Error", "Grab failed\n");
+            return;
+        }
     }
     for (int k = int(start * fps); k < int(end * fps); k++) {
-        frame = cvQueryFrame(capture);
-        if (!frame) {
-            break;
-        }
+        capture >> frame;
         if (stop) {
             stop = false;
             break;
         }
-        Mat imgmat(frame), imgmat1;
-        //QImage image = Mat2QImage(imgmat).mirrored(false, true);
-        cvtColor(imgmat, imgmat1, CV_BGR2GRAY, 1);
-        QPair<int, double> pr = processImageCVMat(imgmat1);
+        Mat imgmat;
+        cvtColor(frame, imgmat, CV_BGR2GRAY, 1);
+        cv::flip(imgmat,imgmat,0);
+        QPair<int, double> pr = processImageCVMat(imgmat);
         res.push_back(pr.first);
         resm.push_back(pr.second);
         i++;
@@ -94,16 +93,16 @@ void Processor::run()
         QThread::currentThread()->usleep(500);
     }
     emit progress(100);
-    cvReleaseCapture(&capture);
+    capture.release();
     emit graphL(res, t);
     emit graphM(resm, t);
 }
 
 /*!
- * \brief Processor::processImage
- * \param _image
- * \return 
- */
+         * \brief Processor::processImage
+         * \param _image
+         * \return 
+         */
 QPair<int, double> Processor::processImage(QImage _image)
 {
     int counter = 0;
@@ -168,30 +167,6 @@ QPair<int, double> Processor::processImage(QImage _image)
 QPair<int, double> Processor::processImageCV(QImage _image)
 {
     Mat m = QImage2Mat(_image);
-//    Mat mm;
-//    m.copyTo(mm);
-//    cv::threshold(m, m, threshold, 255, 0);
-//    rect = rect.normalized();
-//    Rect r(rect.left(),  rect.top(), rect.width(),rect.height());
-//    m = m(r);
-//    std::vector<std::vector<cv::Point>> arr;
-//    findContours(m, arr, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-//    double sum = 0, mean0 = 0;
-//    for(auto a: arr){
-//        sum += contourArea(a);
-        
-//    }
-//    for (int i = 0; i < arr.size(); i++){
-//        for(cv::Point& a: arr[i]){
-//            a.x += r.x;
-//            a.y +=r.y;
-//        }
-//        mean0 += mean(mm,arr[i]);
-//        drawContours(mm, arr, i, Scalar(0,255,0));
-//    }
-//    QPair<int, double> res(sum, mean0);
-//    emit frameChanged(Mat2QImage(mm));
-//    return res;
     return processImageCVMat(m);
 }
 
@@ -210,7 +185,7 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
         sum += contourArea(a);
         
     }
-    for (auto i = 0; i < arr.size(); i++){
+    for (unsigned i = 0; i < arr.size(); i++){
         for(cv::Point& a: arr[i]){
             a.x += r.x;
             a.y +=r.y;
@@ -224,10 +199,10 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
 }
 
 /*!
- * \brief Processor::IplImage2QImage
- * \param iplImage
- * \return 
- */
+         * \brief Processor::IplImage2QImage
+         * \param iplImage
+         * \return 
+         */
 QImage Processor::IplImage2QImage(const IplImage* iplImage)
 {
     int height = iplImage->height;
@@ -239,8 +214,8 @@ QImage Processor::IplImage2QImage(const IplImage* iplImage)
 }
 
 /*!
- * \brief Processor::stopThis
- */
+         * \brief Processor::stopThis
+         */
 void Processor::stopThis()
 {
     stop = true;
@@ -248,17 +223,14 @@ void Processor::stopThis()
 
 QImage Processor::Mat2QImage(cv::Mat const& src)
 {
-    cv::Mat temp; // make the same cv::Mat
-    
-    //cvtColor(src, temp,CV_BGR2RGB);
+    cv::Mat temp;
     if(src.channels() == 1){
-        cvtColor(src, temp,CV_GRAY2RGB); // cvtColor Makes a copt, that what i need
+        cvtColor(src, temp,CV_GRAY2RGB);
     }else if(src.channels() == 3){
-        cvtColor(src, temp,CV_BGR2RGB); // cvtColor Makes a copt, that what i need
+        cvtColor(src, temp,CV_BGR2RGB);
     }
     QImage dest((const uchar *) temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
-    dest.bits(); // enforce deep copy, see documentation 
-    // of QImage::QImage ( const uchar * data, int width, int height, Format format )
+    dest.bits();
     return dest;
 }
 
@@ -272,16 +244,12 @@ cv::Mat Processor::QImage2Mat(QImage const& src)
         cv::Mat tmp1(src.height(),src.width(),CV_8UC4,(uchar*)src.bits(),src.bytesPerLine());
         tmp1.copyTo(tmp);
     }
-    cv::Mat result(src.height(),src.width(),CV_8UC1); // deep copy just in case (my lack of knowledge with open cv)
-    //std::cerr  << tmp.channels();
+    cv::Mat result(src.height(),src.width(),CV_8UC1);
     cvtColor(tmp, result, CV_BGR2GRAY, 1);
-    //cvtColor(tmp, result,CV_BGR2RGB);
     return result;
 }
 
 double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
-    // Create a small image with a circle in it.
-    // Create random Contour
     typedef cv::vector<cv::Point> TContour;
     
     // The conversion to cv::vector<cv::vector<cv::Point>> is unavoidable,
@@ -289,9 +257,6 @@ double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
     cv::Mat imageWithContour(image.clone());
     typedef cv::vector<TContour> TContours;
     cv::drawContours(imageWithContour, TContours(1, contour), -1, cv::Scalar(255, 255, 255));
-    
-    // Show the contour.
-    //cv::imshow("image with contour", imageWithContour);
     
     // Get ROI image.
     cv::Rect roi(cv::boundingRect(contour));
@@ -301,17 +266,10 @@ double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
     cv::Mat mask(cv::Mat::zeros(crop.rows, crop.cols, CV_8UC1)); //the mask with the size of cropped image
     // The offset for drawContours has to be *minus* roi.tl();
     cv::drawContours(mask, TContours(1, contour), -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
-    //auto mean(cv::sum(cv::mean(crop, mask)));
+    
     auto mean(cv::mean(crop, mask));
     auto sum(cv::sum(mean));
     
-    // Show crop and mask.
-    //cv::imshow("crop", crop);
-    //cv::imshow("mask", mask);
-    
-    // Print mean
-    
-    // Wait for user input.
-    //cv::waitKey();
     return sum[0];
 }
+

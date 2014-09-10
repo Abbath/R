@@ -52,6 +52,7 @@ private slots:
     void on_doubleSpinBox_3_valueChanged(double arg1);
     
     void on_actionQuit_triggered();
+    void detection();
     
 signals:
     void stop();

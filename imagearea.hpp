@@ -52,6 +52,7 @@ private:
     bool rect;
     QRect bounds;
 public slots:
+    void rectRecv(QRect rect);
     void frameChanged(QImage _image);
 signals:
     void rectChanged(QRect r);

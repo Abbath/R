@@ -28,7 +28,7 @@ HEADERS  += mainwindow.hpp \
 FORMS    += mainwindow.ui \
     imagearea.ui
 unix{
-LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
+LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_photo -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
 }
 

@@ -48,6 +48,7 @@ void Processor::run()
 {
     QVector<int> res;
     QVector<double> resm, t;
+    rect = autoDetect();
     VideoCapture capture(filename.toStdString().c_str());
     if (!capture.isOpened()) {
         QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
@@ -72,11 +73,11 @@ void Processor::run()
         }
     }
     for (int k = int(start * fps); k < int(end * fps); k++) {
-        capture >> frame;
         if (stop) {
             stop = false;
             break;
         }
+        capture >> frame;
         Mat imgmat;
         cvtColor(frame, imgmat, CV_BGR2GRAY, 1);
         cv::flip(imgmat,imgmat,0);
@@ -90,7 +91,7 @@ void Processor::run()
         }
         emit time(i / (double)fps);
         t.push_back(i / (double)fps);
-        QThread::currentThread()->usleep(500);
+        QThread::currentThread()->usleep(50);
     }
     emit progress(100);
     capture.release();
@@ -273,3 +274,61 @@ double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
     return sum[0];
 }
 
+QRect Processor::autoDetect(){
+    emit detection();
+    VideoCapture capture(filename.toStdString().c_str());
+    if (!capture.isOpened()) {
+        QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
+        return rect;
+    }
+    Mat frame, oldframe, dif, res;
+    int frameNumbers = capture.get(CV_CAP_PROP_FRAME_COUNT);
+    int fps = capture.get(CV_CAP_PROP_FPS); 
+    capture.read(oldframe);
+    capture.read(frame);
+    absdiff(frame, oldframe, dif);
+    cv::threshold(dif,dif,40,255,THRESH_BINARY);
+    res = dif.clone();
+    for(int i = 2; i < frameNumbers; ++i){
+        if(i%fps == 0){
+            Mat dif;
+            oldframe = frame.clone();
+            capture >> frame;
+            absdiff(frame, oldframe, dif);
+            cv::threshold(dif,dif,40,255,THRESH_BINARY);
+            cv::bitwise_or(dif,res,res);
+        }else{
+            capture.grab();
+        }
+    }
+    cv::flip(res,res,0);
+    fastNlMeansDenoising(res,res,17);
+    Mat res1(res.rows, res.cols, CV_8UC1);
+    cvtColor(res,res1,CV_RGB2GRAY);
+    std::vector<std::vector<cv::Point>> contours;
+    findContours(res1, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    std::vector<cv::Rect> boundRect( contours.size() );
+    int maxx = 0, minx = res1.cols, maxy = 0, miny = res1.rows; 
+    for(unsigned i = 0; i < contours.size(); ++i){
+        boundRect[i] = boundingRect(contours[i]);
+        if(boundRect[i].x < minx){
+            minx = boundRect[i].x;
+        }
+        if(boundRect[i].y < miny){
+            miny = boundRect[i].y;
+        }
+        if((boundRect[i].x + boundRect[i].width) > maxx){
+            maxx = boundRect[i].x + boundRect[i].width;
+        }
+        if((boundRect[i].y + boundRect[i].height) > maxy){
+            maxy = boundRect[i].y + boundRect[i].height;
+        }
+    }
+    cv::Rect r(minx, miny, maxx-minx, maxy-miny);
+    rectangle(res1, r, 0xffffff);
+    capture.release();
+    QRect rec(minx, miny, maxx-minx, maxy-miny);
+    emit rectChanged(rec);
+    return rec;
+}
+ 

@@ -6,6 +6,7 @@
 #include <QThread>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/photo/photo.hpp>
 #include <iostream>
 
 using namespace cv;
@@ -30,7 +31,9 @@ public:
     
 signals:
     void frameChanged(QImage frame);
+    void rectChanged(QRect rect);
     void maxMinBounds(QRect rect);
+    void detection();
     void progress(int);
     void time(double);
     void graphL(const QVector<int> &v, const QVector<double>&v0);
@@ -49,6 +52,7 @@ private:
     QImage Mat2QImage(const cv::Mat &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);
+    QRect autoDetect();
 };
 
 #endif // VIDEOPROCESSOR_H

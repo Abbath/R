@@ -40,14 +40,14 @@ MainWindow::MainWindow(QWidget* parent)
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
 
-    connect(vp, SIGNAL(graphL(QVector<int>, QVector<double>)), this, SLOT(displayResultsL(QVector<int>, QVector<double>)), Qt::QueuedConnection);
-    connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>)), Qt::QueuedConnection);
+    connect(vp, SIGNAL(graphL(QVector<int>, QVector<double>)), this, SLOT(displayResultsL(QVector<int>, QVector<double>))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>))/*, Qt::QueuedConnection*/);
 
-    connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)), Qt::QueuedConnection);
-    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(rectRecv(QRect)), Qt::QueuedConnection);
-    connect(this, SIGNAL(stop()), vp, SLOT(stopThis()), Qt::QueuedConnection);
-    connect(vp, SIGNAL(maxMinBounds(QRect)), this, SLOT(setMaxMinBounds(QRect)), Qt::QueuedConnection);
-    connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int)), Qt::QueuedConnection);
+    connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(rectRecv(QRect))/*, Qt::QueuedConnection*/);
+    connect(this, SIGNAL(stop()), vp, SLOT(stopThis())/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(maxMinBounds(QRect)), this, SLOT(setMaxMinBounds(QRect))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int))/*, Qt::QueuedConnection*/);
     connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(vp,SIGNAL(detection()), this, SLOT(detection()));
     this->showMaximized();

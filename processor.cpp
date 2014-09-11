@@ -52,9 +52,8 @@ void Processor::setStart(double value)
  * \brief Processor::Processor
  * \param parent
  */
-Processor::Processor(QObject* parent)
+Processor::Processor(QObject* parent) : QObject( parent )
 {
-    Q_UNUSED(parent)
     setAutoDelete(false);
 }
 
@@ -64,7 +63,8 @@ Processor::Processor(QObject* parent)
 void Processor::run()
 {
     QVector<int> res;
-    QVector<double> resm, t;
+    QVector<double> resm;
+    QVector<double> t;
     if(ad){
         rect = autoDetect();
     }

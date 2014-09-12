@@ -4,8 +4,8 @@
 #include <QMainWindow>
 #include <QtCore>
 #include <QtGui>
-#include <imagearea.hpp>
-#include <processor.hpp>
+#include "imagearea.hpp"
+#include "processor.hpp"
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>

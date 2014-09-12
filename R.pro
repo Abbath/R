@@ -17,12 +17,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     imagearea.cpp \
-    mainwidget.cpp \
+#    mainwidget.cpp \
     processor.cpp
 
 HEADERS  += mainwindow.hpp \
     imagearea.hpp \
-    mainwidget.hpp \
+#    mainwidget.hpp \
     processor.hpp
 
 FORMS    += mainwindow.ui \
@@ -30,6 +30,7 @@ FORMS    += mainwindow.ui \
 unix{
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_photo -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
+QMAKE_CXXFLAGS += -std=c++0x
 }
 
 win32{

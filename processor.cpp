@@ -52,7 +52,7 @@ void Processor::setStart(double value)
  * \brief Processor::Processor
  * \param parent
  */
-Processor::Processor(QObject* parent) : QObject( parent )
+Processor::Processor(QObject* parent) : QObject( parent ), threshold(255), start(-1), end(-1), stop(false), ad(false)
 {
     setAutoDelete(false);
 }

@@ -49,10 +49,10 @@ private:
 private:
     QString filename;
     QRect rect;
-    unsigned int threshold = 255;
-    double start = -1, end = -1;
-    volatile bool stop = false;
-    bool ad = false;
+    unsigned int threshold;
+    double start, end;
+    volatile bool stop;
+    bool ad;
     cv::Mat QImage2Mat(const QImage &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);

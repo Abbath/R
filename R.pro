@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui multimedia
+QT       += core gui 
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 qtHaveModule(opengl) {
@@ -33,12 +33,10 @@ INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
 }
 
 win32{
-LIBS += -lopencv_core246 -lopencv_highgui246 -lopencv_imgproc246 -lqwt -L"C:\opencv-build\bin"
-INCLUDEPATH += "C:\opencv\build\include"
-INCLUDEPATH += "C:\Users\Dan\Downloads\qwt-6.1.0\qwt-6.1.0\qwt"
-LIBS += -L"C:\Users\Dan\Downloads\qwt-6.1.0\qwt-6.1.0\lib"
+INCLUDEPATH += "D:\opencv\build\include"
+INCLUDEPATH += "D:\qwt-6.1.0\qwt-6.1.0\qwt"
 }
-QMAKE_CXXFLAGS += -std=c++0x
+
 
 RESOURCES += \
     shaders.qrc
@@ -46,3 +44,19 @@ RESOURCES += \
 OTHER_FILES += \
     vshader.glsl \
     fshader.glsl
+
+win32:CONFIG(release, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwt
+else:win32:CONFIG(debug, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwtd
+
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_core249
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_core249d
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_highgui249
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_highgui249d
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_imgproc249
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_imgproc249d
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_photo249
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_photo249d

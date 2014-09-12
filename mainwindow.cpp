@@ -27,7 +27,7 @@ MainWindow::MainWindow(QWidget* parent)
     vp = new Processor;
 
     ui->imagearea->readConfig("bounds.conf");
-    QRect r = ui->imagearea->getRect();
+    QRect r = ui->imagearea->getBounds();
     ui->spinBox_X1->setMaximum(r.left());
     ui->spinBox_Y1->setMaximum(r.top());
     ui->spinBox_X2->setMaximum(r.right());
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>))/*, Qt::QueuedConnection*/);
 
     connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage))/*, Qt::QueuedConnection*/);
-    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(rectRecv(QRect))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect))/*, Qt::QueuedConnection*/);
     connect(this, SIGNAL(stop()), vp, SLOT(stopThis())/*, Qt::QueuedConnection*/);
     connect(vp, SIGNAL(maxMinBounds(QRect)), this, SLOT(setMaxMinBounds(QRect))/*, Qt::QueuedConnection*/);
     connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int))/*, Qt::QueuedConnection*/);
@@ -75,6 +75,7 @@ void MainWindow::initPlot(QwtPlot* plot, QwtPlotMagnifier* mag, QwtPlotZoomer* z
     curve.setRenderHint(QwtPlotItem::RenderAntialiased);
     curve.setPen(QPen(Qt::red));
     curve.attach(plot);
+    Q_UNUSED(mag);
 }
 
 /*!
@@ -123,7 +124,7 @@ void MainWindow::on_actionOpen_triggered()
     ui->spinBox_X2->setMaximum(image.width());
     ui->spinBox_Y2->setMaximum(image.height());
     vp->setThreshold(ui->spinBox->value());
-    vp->setRect(ui->imagearea->getRect());
+    vp->setRect(ui->imagearea->getBounds());
     QPair<int, double> id = vp->processImageCV(image);
     ui->label_light->setNum(id.first);
     ui->label_mean->setNum(id.second);
@@ -136,6 +137,7 @@ void MainWindow::on_actionOpen_triggered()
  */
 void MainWindow::on_action3D_triggered(bool checked)
 {
+    Q_UNUSED(checked);
     /*if(checked){
         ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
         ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
@@ -333,7 +335,7 @@ void MainWindow::on_actionRun_triggered()
     ui->label_8->show();
     if (!fileNameV.isNull()) {
         vp->setThreshold(ui->spinBox->value());
-        vp->setRect(ui->imagearea->getRect());
+        vp->setRect(ui->imagearea->getBounds());
         QThreadPool::globalInstance()->start(vp);
     }
 }
@@ -432,4 +434,15 @@ void MainWindow::detection()
 void MainWindow::on_actionAutodetection_triggered(bool checked)
 {
     vp->setAd(checked);
+}
+
+void MainWindow::on_actionAbout_triggered()
+{
+    QString cv;
+#if defined(__GNUC__) || defined(__GNUG__)
+	cv = "GCC "+QString::number(__GNUC__)+"."+QString::number(__GNUC_MINOR__)+"."+QString::number(__GNUC_PATCHLEVEL__);
+#elif defined(_MSC_VER)
+	cv = "MSVC "+QString::number(__MSC_FULL_VER__);
+#endif
+    QMessageBox::about(this,"R", "Lab-on-a-chip light analyser. © 2013-2014\nQt version: "+QString(QT_VERSION_STR)+"\nCompiler Version: "+cv);
 }

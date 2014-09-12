@@ -30,8 +30,8 @@ public:
     QSize getSize(){ return image.size(); }
     void saveBounds();
     void saveResults();
-    QImage getImage() { if(image.isNull()) return pix; else return image;}
-    QRect getRect(){return bounds;}
+    QImage getImage() { if(image.isNull()) return tmpimage; else return image;}
+    QRect getBounds(){ return bounds;}
  
     int x1(){ return bounds.left(); }
     int x2(){ return bounds.right(); }
@@ -50,11 +50,11 @@ private:
     QVector<double> resm;
     //int scan(QVector<Point>& v);
     Ui::ImageArea *ui;
-    QImage image, pix;
-    bool rect;
+    QImage image, tmpimage;
+    bool rectdrawing;
     QRect bounds;
 public slots:
-    void rectRecv(QRect rect);
+    void boundsChanged(QRect _bounds);
     void frameChanged(QImage _image);
 signals:
     void rectChanged(QRect r);

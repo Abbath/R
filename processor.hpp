@@ -4,6 +4,7 @@
 #include <QRunnable>
 #include <QMessageBox>
 #include <QThread>
+#include <QPainter>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/photo/photo.hpp>
@@ -25,7 +26,6 @@ public:
     void setAd(bool _ad) { ad = _ad; }
     void run();
     QImage Mat2QImage(const cv::Mat &src);
-    QPair<int, double> processImage(QImage _image);
     QPair<int, double> processImageCV(QImage _image);
     double getStart() const;
     void setStart(double value);
@@ -56,6 +56,7 @@ private:
     cv::Mat QImage2Mat(const QImage &src);
     double mean(cv::Mat image, std::vector<cv::Point> contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);
+    QImage drawOnQImage(QImage image, std::vector<std::vector<cv::Point>> contours);
     QRect autoDetect();
 };
 

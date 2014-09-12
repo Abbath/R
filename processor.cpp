@@ -119,72 +119,6 @@ void Processor::run()
 }
 
 /*!
-         * \brief Processor::processImage
-         * \param _image
-         * \return 
-         */
-QPair<int, double> Processor::processImage(QImage _image)
-{
-    int counter = 0;
-    double sum = 0.0;
-    QImage image = _image;
-    if (!_image.isNull()) {
-        int histogram[256] = { 0 };
-        unsigned int minx = rect.right(), miny = rect.bottom(), maxx = rect.left(), maxy = rect.left();
-        unsigned int x1 = rect.left(), x2 = rect.right(), y1 = rect.top(), y2 = rect.bottom();
-        for (unsigned i = x1 + 1; i != x2; x1 < x2 ? ++i : --i) {
-            for (unsigned j = y1 + 1; j != y2; y1 < y2 ? ++j : --j) {
-                if (qrgbToGray(_image.pixel(i, j)) >= threshold) {
-                    histogram[qrgbToGray(_image.pixel(i, j))]++;
-                    counter++;
-                }
-                if (qrgbToGray(_image.pixel(i, j)) < threshold && (qrgbToGray(_image.pixel(i + 1, j)) >= threshold || qrgbToGray(_image.pixel(i, j + 1)) >= threshold || qrgbToGray(_image.pixel(i - 1, j)) >= threshold || qrgbToGray(_image.pixel(i, j - 1)) >= threshold)) {
-                    image.setPixel(i, j, 0x00ff00);
-                    if (minx > i) {
-                        minx = i;
-                    }
-                    if (miny < j) {
-                        miny = j;
-                    }
-                    if (maxx < i) {
-                        maxx = i;
-                    }
-                    if (maxy < j) {
-                        maxy = j;
-                    }
-                }
-            }
-        }
-        
-        for (unsigned i = x1; i != (x1 < x2 ? x2 + 1 : x2 - 1); x1 < x2 ? ++i : --i) {
-            if (qrgbToGray(_image.pixel(i, y1)) >= threshold) {
-                image.setPixel(i, y1, 0x00ff00);
-            }
-            if (qrgbToGray(_image.pixel(i, y2)) >= threshold) {
-                image.setPixel(i, y2, 0x00ff00);
-            }
-        }
-        for (unsigned i = y1; i != (y1 < y2 ? y2 + 1 : y2 - 1); y1 < y2 ? ++i : --i) {
-            if (qrgbToGray(_image.pixel(x1, i)) >= threshold) {
-                image.setPixel(x1, i, 0x00ff00);
-            }
-            if (qrgbToGray(_image.pixel(x2, i)) >= threshold) {
-                image.setPixel(x2, i, 0x00ff00);
-            }
-        }
-        for (int i = 0; i < 256; ++i) {
-            sum += histogram[i] * i;
-        }
-        QRect r(minx, miny, maxx, maxy);
-        emit maxMinBounds(r);
-        emit frameChanged(image);
-    }
-    sum = (counter != 0 ? sum / counter : 0);
-    QPair<int, double> res(counter, sum);
-    return res;
-}
-
-/*!
  * \brief Processor::processImageCV
  * \param _image
  * \return 
@@ -220,11 +154,29 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
             a.y +=r.y;
         }
         mean0 += mean(mm,arr[i]);
-        drawContours(mm, arr, i, Scalar(0,255,0));
+        //drawContours(mm, arr, i, Scalar(255,255,255));
     }
     QPair<int, double> res(sum, mean0);
-    emit frameChanged(Mat2QImage(mm));
+    emit frameChanged(drawOnQImage(Mat2QImage(mm),arr));
+    //emit frameChanged(Mat2QImage(mm));
     return res;
+}
+
+QImage Processor::drawOnQImage(QImage image, std::vector<std::vector<Point> > contours)
+{
+    QPainter p;
+    p.begin(&image);
+    p.setPen(QPen(QColor(0,255,0)));
+    for(auto it = contours.begin(); it != contours.end(); ++it){
+        for(auto itp = it->begin(); itp != it->end(); ++itp){
+            if((itp+1) != it->end()){
+                p.drawLine(itp->x, itp->y, (itp+1)->x, (itp+1)->y);
+            }else{
+                p.drawLine((it->end()-1)->x, (it->end()-1)->y, (it->begin())->x, (it->begin())->y);
+            }
+        }
+    }
+    return image;
 }
 
 /*!
@@ -323,7 +275,7 @@ QRect Processor::autoDetect(){
     cv::threshold(dif,dif,40,255,THRESH_BINARY);
     res = dif.clone();
     for(int i = 2; i < frameNumbers; ++i){
-        if(i%fps == 0){
+        if(i%(frameNumbers/50) == 0){
             Mat dif;
             oldframe = frame.clone();
             capture >> frame;

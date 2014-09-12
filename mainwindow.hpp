@@ -57,6 +57,8 @@ private slots:
     void detection();
     void on_actionAutodetection_triggered(bool checked);
     
+    void on_actionAbout_triggered();
+    
 signals:
     void stop();
 

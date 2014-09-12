@@ -10,7 +10,7 @@
 ImageArea::ImageArea(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::ImageArea)
-    , rect(true)
+    , rectdrawing(true)
 {
     setX1(0);
     setX2(image.width() - 1);
@@ -32,9 +32,9 @@ ImageArea::~ImageArea()
  * \brief ImageArea::rectRecv
  * \param rect
  */
-void ImageArea::rectRecv(QRect rect)
+void ImageArea::boundsChanged(QRect _bounds)
 {
-    bounds = rect;
+    bounds = _bounds;
     update();
 }
 
@@ -47,13 +47,13 @@ void ImageArea::paintEvent(QPaintEvent* e)
     QPainter painter(this);
     painter.setPen(Qt::green);
     if (!image.isNull()) {
-        if (!rect) {
+        if (!rectdrawing) {
             painter.drawImage(0, 0, image);
             painter.drawRect(bounds);
             return;
         } else {
 
-            painter.drawImage(0, 0, pix);
+            painter.drawImage(0, 0, tmpimage);
 
             painter.setPen(Qt::red);
 
@@ -80,7 +80,7 @@ void ImageArea::paintEvent(QPaintEvent* e)
 void ImageArea::mousePressEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
-        rect = false;
+        rectdrawing = false;
         setX1(e->x());
         setY1(e->y());
         if (e->x() < 0)
@@ -111,7 +111,7 @@ void ImageArea::mouseReleaseEvent(QMouseEvent* e)
             setX2(image.width() - 1);
         if (e->y() >= image.height())
             setY2(image.height() - 1);
-        rect = true;
+        rectdrawing = true;
         emit rectChanged(bounds);
         update();
     }
@@ -146,7 +146,7 @@ void ImageArea::mouseMoveEvent(QMouseEvent* e)
 void ImageArea::open(QString filename)
 {
     image.load(filename);
-    pix = image;
+    tmpimage = image;
     update();
 }
 
@@ -157,7 +157,7 @@ void ImageArea::open(QString filename)
 void ImageArea::loadImage(QImage _image)
 {
     image = _image;
-    pix = _image;
+    tmpimage = _image;
     update();
 }
 
@@ -219,8 +219,8 @@ void ImageArea::saveResults()
          */
 void ImageArea::frameChanged(QImage _image)
 {
-    pix = _image;
-    rect = true;
+    tmpimage = _image;
+    rectdrawing = true;
     update();
 }
 

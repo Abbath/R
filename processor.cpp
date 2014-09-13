@@ -52,7 +52,7 @@ void Processor::setStart(double value)
  * \brief Processor::Processor
  * \param parent
  */
-Processor::Processor(QObject* parent) : QObject( parent ), threshold(255), start(-1), end(-1), stop(false), ad(false)
+Processor::Processor(QObject* parent) : QObject( parent ), lightThreshold(255), start(-1), end(-1), stop(false), ad(false)
 {
     setAutoDelete(false);
 }
@@ -62,60 +62,80 @@ Processor::Processor(QObject* parent) : QObject( parent ), threshold(255), start
  */
 void Processor::run()
 {
-    QVector<int> res;
-    QVector<double> resm;
-    QVector<double> t;
+    QVector<int> lightPixelsNumbers;
+    QVector<double> lightPixelsMeans;
+    QVector<double> timestamps;
+    
     if(ad){
-        rect = autoDetect();
+        rect = autoDetectLight();
     }
-    VideoCapture capture(filename.toStdString().c_str());
-    if (!capture.isOpened()) {
+    
+    cv::VideoCapture capture(filename.toStdString().c_str());
+    
+    if(!capture.isOpened()){
         QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
         return;
     }
-    Mat frame;
-    res.clear();
-    resm.clear();
-    int frameNumbers = capture.get(CV_CAP_PROP_FRAME_COUNT);
+    
+    int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
     int fps = capture.get(CV_CAP_PROP_FPS); 
-    int i = 0;
-    if (start == -1) {
+    
+    if(start == -1){
         start = 0;
     }
-    if (end == -1) {
-        end = frameNumbers / (double)fps;
+    
+    if(end == -1){
+        end = frameNumber / double(fps);
     }
-    for (int j = 0; j < int(start * fps); ++j, ++i) {
+    
+    int absIndex = 0;
+    
+    for(int i = 0; i < int(start * fps); ++i, ++absIndex){
         if(!capture.grab()){
             QMessageBox::warning(0, "Error", "Grab failed\n");
             return;
         }
     }
-    for (int k = int(start * fps); k < int(end * fps); k++) {
+    
+    cv::Mat frame;
+    
+    for(int i = int(start * fps); i < int(end * fps); i++){
         if (stop) {
             stop = false;
             break;
         }
+       
         capture >> frame;
-        Mat imgmat;
-        cvtColor(frame, imgmat, CV_BGR2GRAY, 1);
-        cv::flip(imgmat,imgmat,0);
-        QPair<int, double> pr = processImageCVMat(imgmat);
-        res.push_back(pr.first);
-        resm.push_back(pr.second);
-        i++;
-        int l = i - int(start * fps);
-        if (!(l % (int((end - start) * fps) / 100))) {
-            emit progress(l / (int((end - start) * fps) / 100));
+        
+        cv::Mat grayFrame;
+        cv::cvtColor(frame, grayFrame, CV_BGR2GRAY, 1);
+        cv::flip(grayFrame, grayFrame, 0);
+        
+        QPair<int, double> processingResult = processImageCVMat(grayFrame);
+        
+        lightPixelsNumbers.push_back(processingResult.first);
+        lightPixelsMeans.push_back(processingResult.second);
+        
+        absIndex++;
+        
+        int relIndex = absIndex - int(start * fps);
+        
+        if (!(relIndex % (int((end - start) * fps) / 100))) {
+            emit progress(relIndex / (int((end - start) * fps) / 100));
         }
-        emit time(i / (double)fps);
-        t.push_back(i / (double)fps);
+        
+        double timestamp = absIndex / double(fps);
+        timestamps.push_back(timestamp);
+        emit time(timestamp);
+        
         QThread::currentThread()->usleep(50);
     }
-    emit progress(100);
     capture.release();
-    emit graphL(res, t);
-    emit graphM(resm, t);
+    
+    emit progress(100);
+    
+    emit graphL(lightPixelsNumbers, timestamps);
+    emit graphM(lightPixelsMeans, timestamps);
 }
 
 /*!
@@ -125,7 +145,7 @@ void Processor::run()
  */
 QPair<int, double> Processor::processImageCV(QImage _image)
 {
-    Mat m = QImage2Mat(_image);
+    cv::Mat m = QImage2Mat(_image);
     return processImageCVMat(m);
 }
 
@@ -135,47 +155,52 @@ QPair<int, double> Processor::processImageCV(QImage _image)
  * \return 
  */
 QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
-    Mat mm;
-    m.copyTo(mm);
-    cv::threshold(m, m, threshold-1, 255, THRESH_BINARY);
+    cv::Mat matCopy;
+    m.copyTo(matCopy);
+    
+    cv::threshold(m, m, lightThreshold-1, 255, cv::THRESH_BINARY);
+    
     rect = rect.normalized();
-    Rect r(rect.left(),  rect.top(), rect.width(),rect.height());
-    m = m(r);
-    std::vector<std::vector<cv::Point>> arr;
-    findContours(m, arr, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-    double sum = 0, mean0 = 0;
-    for(auto a: arr){
-        sum += contourArea(a);
-        
+    cv::Rect rec(rect.left(), rect.top(), rect.width(), rect.height());
+    m = m(rec);
+    
+    Contours contours;
+    cv::findContours(m, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    
+    double lightArea = 0, lightMean = 0;
+    
+    for(auto c: contours){
+        lightArea += cv::contourArea(c);
     }
-    for (unsigned i = 0; i < arr.size(); i++){
-        for(cv::Point& a: arr[i]){
-            a.x += r.x;
-            a.y +=r.y;
+    
+    for (unsigned i = 0; i < contours.size(); i++){
+        for(auto& p: contours[i]){
+            p.x += rec.x;
+            p.y +=rec.y;
         }
-        mean0 += mean(mm,arr[i]);
-        //drawContours(mm, arr, i, Scalar(255,255,255));
+        lightMean += mean(matCopy,contours[i]);
     }
-    QPair<int, double> res(sum, mean0);
-    emit frameChanged(drawOnQImage(Mat2QImage(mm),arr));
-    //emit frameChanged(Mat2QImage(mm));
-    return res;
+    
+    emit frameChanged(drawOnQImage(Mat2QImage(matCopy),contours));
+    
+    QPair<int, double> result(lightArea, lightMean);
+    
+    return result;
 }
 
-QImage Processor::drawOnQImage(QImage image, std::vector<std::vector<Point> > contours)
+QImage Processor::drawOnQImage(QImage image, Contours contours)
 {
     QPainter p;
     p.begin(&image);
     p.setPen(QPen(QColor(0,255,0)));
-    for(auto it = contours.begin(); it != contours.end(); ++it){
-        for(auto itp = it->begin(); itp != it->end(); ++itp){
-            if((itp+1) != it->end()){
-                p.drawLine(itp->x, itp->y, (itp+1)->x, (itp+1)->y);
-            }else{
-                p.drawLine((it->end()-1)->x, (it->end()-1)->y, (it->begin())->x, (it->begin())->y);
-            }
+    
+    for(auto contourIt = contours.begin(); contourIt != contours.end(); ++contourIt){
+        for(auto pointIt = contourIt->begin(); pointIt != (contourIt->end() - 1); ++pointIt){
+            p.drawLine(pointIt->x, pointIt->y, (pointIt + 1)->x, (pointIt + 1)->y);
         }
+        p.drawLine((contourIt->end() - 1)->x, (contourIt->end() - 1)->y, (contourIt->begin())->x, (contourIt->begin())->y);
     }
+    
     return image;
 }
 
@@ -195,11 +220,13 @@ void Processor::stopThis()
 QImage Processor::Mat2QImage(cv::Mat const& src)
 {
     cv::Mat temp;
+    
     if(src.channels() == 1){
-        cvtColor(src, temp,CV_GRAY2RGB);
+        cv::cvtColor(src, temp, CV_GRAY2RGB);
     }else if(src.channels() == 3){
-        cvtColor(src, temp,CV_BGR2RGB);
+        cv::cvtColor(src, temp, CV_BGR2RGB);
     }
+    
     QImage dest((const uchar *) temp.data, temp.cols, temp.rows, temp.step, QImage::Format_RGB888);
     dest.bits();
     return dest;
@@ -213,14 +240,16 @@ QImage Processor::Mat2QImage(cv::Mat const& src)
 cv::Mat Processor::QImage2Mat(QImage const& src)
 {
     cv::Mat tmp;
+    
     if(src.format() == QImage::Format_RGB888){
-        cv::Mat tmp1(src.height(),src.width(),CV_8UC3,(uchar*)src.bits(),src.bytesPerLine());
+        cv::Mat tmp1(src.height(), src.width(), CV_8UC3, (uchar*)src.bits(), src.bytesPerLine());
         tmp1.copyTo(tmp);
     }else{
-        cv::Mat tmp1(src.height(),src.width(),CV_8UC4,(uchar*)src.bits(),src.bytesPerLine());
+        cv::Mat tmp1(src.height(), src.width(), CV_8UC4, (uchar*)src.bits(), src.bytesPerLine());
         tmp1.copyTo(tmp);
     }
-    cv::Mat result(src.height(),src.width(),CV_8UC1);
+    
+    cv::Mat result(src.height(), src.width(), CV_8UC1);
     cvtColor(tmp, result, CV_BGR2GRAY, 1);
     return result;
 }
@@ -231,23 +260,17 @@ cv::Mat Processor::QImage2Mat(QImage const& src)
  * \param contour
  * \return 
  */
-double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
-    typedef cv::vector<cv::Point> TContour;
+double Processor::mean(cv::Mat image, Contour contour){
     
-    // The conversion to cv::vector<cv::vector<cv::Point>> is unavoidable,
-    // but can easily be achieved with a temporary instance.
     cv::Mat imageWithContour(image.clone());
-    typedef cv::vector<TContour> TContours;
-    cv::drawContours(imageWithContour, TContours(1, contour), -1, cv::Scalar(255, 255, 255));
+    cv::drawContours(imageWithContour, Contours(1, contour), -1, cv::Scalar(255, 255, 255));
     
-    // Get ROI image.
     cv::Rect roi(cv::boundingRect(contour));
     cv::Mat crop(image, roi);
     
-    // Calculate ROI mean.
-    cv::Mat mask(cv::Mat::zeros(crop.rows, crop.cols, CV_8UC1)); //the mask with the size of cropped image
-    // The offset for drawContours has to be *minus* roi.tl();
-    cv::drawContours(mask, TContours(1, contour), -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
+    cv::Mat mask(cv::Mat::zeros(crop.rows, crop.cols, CV_8UC1));
+
+    cv::drawContours(mask, Contours(1, contour), -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
     
     auto mean(cv::mean(crop, mask));
     auto sum(cv::sum(mean));
@@ -259,41 +282,54 @@ double Processor::mean(cv::Mat image, std::vector<cv::Point> contour){
  * \brief Processor::autoDetect
  * \return 
  */
-QRect Processor::autoDetect(){
+QRect Processor::autoDetectLight(){
     emit detection();
-    VideoCapture capture(filename.toStdString().c_str());
+    
+    cv::VideoCapture capture(filename.toStdString().c_str());
+    
     if (!capture.isOpened()) {
         QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
         return rect;
     }
-    Mat frame, oldframe, dif, res;
-    int frameNumbers = capture.get(CV_CAP_PROP_FRAME_COUNT);
+    
+    cv::Mat frame, oldframe, dif;
+    
+    int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
     int fps = capture.get(CV_CAP_PROP_FPS); 
+    
     capture.read(oldframe);
     capture.read(frame);
-    absdiff(frame, oldframe, dif);
-    cv::threshold(dif,dif,40,255,THRESH_BINARY);
-    res = dif.clone();
-    for(int i = 2; i < frameNumbers; ++i){
-        if(i%(frameNumbers/50) == 0){
-            Mat dif;
+    
+    unsigned threshold = 40;
+    
+    cv::absdiff(frame, oldframe, dif);
+    cv::threshold(dif, dif, threshold, 255, cv::THRESH_BINARY);
+    
+    cv::Mat tmp = dif.clone();
+    
+    for(int i = 2; i < frameNumber; ++i){
+        if(i % fps == 0){
             oldframe = frame.clone();
             capture >> frame;
-            absdiff(frame, oldframe, dif);
-            cv::threshold(dif,dif,40,255,THRESH_BINARY);
-            cv::bitwise_or(dif,res,res);
+            cv::absdiff(frame, oldframe, dif);
+            cv::threshold(dif, dif, threshold, 255, cv::THRESH_BINARY);
+            cv::bitwise_or(dif,tmp,tmp);
+            emit progress(i/(double(frameNumber)/100));
         }else{
             capture.grab();
         }
     }
-    cv::flip(res,res,0);
-    fastNlMeansDenoising(res,res,17);
-    Mat res1(res.rows, res.cols, CV_8UC1);
-    cvtColor(res,res1,CV_RGB2GRAY);
-    std::vector<std::vector<cv::Point>> contours;
-    findContours(res1, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-    std::vector<cv::Rect> boundRect( contours.size() );
-    int maxx = 0, minx = res1.cols, maxy = 0, miny = res1.rows; 
+    
+    cv::flip(tmp, tmp, 0);
+    cv::Mat diffMap(tmp.rows, tmp.cols, CV_8UC1);
+    cv::cvtColor(tmp, diffMap, CV_RGB2GRAY);
+    
+    Contours contours;
+    cv::findContours(diffMap, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    
+    std::vector<cv::Rect> boundRect(contours.size());
+    int maxx = 0, minx = diffMap.cols, maxy = 0, miny = diffMap.rows; 
+    
     for(unsigned i = 0; i < contours.size(); ++i){
         boundRect[i] = boundingRect(contours[i]);
         if(boundRect[i].x < minx){
@@ -309,11 +345,11 @@ QRect Processor::autoDetect(){
             maxy = boundRect[i].y + boundRect[i].height;
         }
     }
-    cv::Rect r(minx, miny, maxx-minx, maxy-miny);
-    rectangle(res1, r, 0xffffff);
+    
     capture.release();
-    QRect rec(minx, miny, maxx-minx, maxy-miny);
-    emit rectChanged(rec);
-    return rec;
+    
+    QRect result(minx, miny, maxx - minx, maxy - miny);
+    emit rectChanged(result);
+    return result;
 }
 

@@ -21,21 +21,21 @@ MainWindow::MainWindow(QWidget* parent)
     ui->progressBar->hide();
     ui->label_8->hide();
    
-    initPlot(ui->l_plot, mag, zoom, curve, QString("Lights"), QString("Time [s]"), QString("Points"));
-    initPlot(ui->m_plot, mag1, zoom1, curve1, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
+    initPlot(ui->l_plot, lightsNumbersPlot, QString("Lights"), QString("Time [s]"), QString("Points"));
+    initPlot(ui->m_plot, lightsMeansPlot, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
 
     vp = new Processor;
 
     ui->imagearea->readConfig("bounds.conf");
-    QRect r = ui->imagearea->getBounds();
-    ui->spinBox_X1->setMaximum(r.left());
-    ui->spinBox_Y1->setMaximum(r.top());
-    ui->spinBox_X2->setMaximum(r.right());
-    ui->spinBox_Y2->setMaximum(r.bottom());
-    ui->spinBox_X1->setValue(r.left());
-    ui->spinBox_Y1->setValue(r.top());
-    ui->spinBox_X2->setValue(r.right());
-    ui->spinBox_Y2->setValue(r.bottom());
+    QRect bounds = ui->imagearea->getBounds();
+    ui->spinBox_X1->setMaximum(bounds.left());
+    ui->spinBox_Y1->setMaximum(bounds.top());
+    ui->spinBox_X2->setMaximum(bounds.right());
+    ui->spinBox_Y2->setMaximum(bounds.bottom());
+    ui->spinBox_X1->setValue(bounds.left());
+    ui->spinBox_Y1->setValue(bounds.top());
+    ui->spinBox_X2->setValue(bounds.right());
+    ui->spinBox_Y2->setValue(bounds.bottom());
 
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(vp, SIGNAL(maxMinBounds(QRect)), this, SLOT(setMaxMinBounds(QRect))/*, Qt::QueuedConnection*/);
     connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int))/*, Qt::QueuedConnection*/);
     connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
-    connect(vp,SIGNAL(detection()), this, SLOT(detection()));
+    connect(vp, SIGNAL(detection()), this, SLOT(detection()));
     this->showMaximized();
 }
 
@@ -63,19 +63,19 @@ MainWindow::MainWindow(QWidget* parent)
  * \param xlabel
  * \param ylabel
  */
-void MainWindow::initPlot(QwtPlot* plot, QwtPlotMagnifier* mag, QwtPlotZoomer* zoom, QwtPlotCurve& curve, QString title, QString xlabel, QString ylabel) {
+void MainWindow::initPlot(QwtPlot* plot, QwtToolSet &toolset, QString title, QString xlabel, QString ylabel) {
     plot->setTitle(title);
     plot->setAxisTitle(plot->xBottom, xlabel);
     plot->setAxisTitle(plot->yLeft, ylabel);
     plot->setAxisAutoScale(plot->xBottom, true);
     plot->setAxisAutoScale(plot->yLeft, true);
-    mag = new QwtPlotMagnifier(plot->canvas());
-    zoom = new QwtPlotZoomer(plot->canvas());
-    zoom->setRubberBandPen(QPen(Qt::white));
-    curve.setRenderHint(QwtPlotItem::RenderAntialiased);
-    curve.setPen(QPen(Qt::red));
-    curve.attach(plot);
-    Q_UNUSED(mag);
+    toolset.mag = new QwtPlotMagnifier(plot->canvas());
+    toolset.zoom = new QwtPlotZoomer(plot->canvas());
+    toolset.zoom->setRubberBandPen(QPen(Qt::white));
+    toolset.curve.setRenderHint(QwtPlotItem::RenderAntialiased);
+    toolset.curve.setPen(QPen(Qt::red));
+    toolset.curve.attach(plot);
+    Q_UNUSED(toolset);
 }
 
 /*!
@@ -97,12 +97,12 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
         //ui->widget_3d->setStep((float)value/255.0);
     } else {
         vp->setThreshold(value);
-        if (!filename.isNull()) {
-            QImage image(filename);
+        if (!imageFileName.isNull()) {
+            QImage image(imageFileName);
             QPair<int, double> id = vp->processImageCV(image);
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
-        } else if(!fileNameV.isNull()){
+        } else if(!videoFileName.isNull()){
             QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
@@ -115,10 +115,10 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
  */
 void MainWindow::on_actionOpen_triggered()
 {
-    filename = QFileDialog::getOpenFileName(this, tr("Open image file"), "", tr("Image files (*.bmp)"));
-    if (filename.isEmpty())
+    imageFileName = QFileDialog::getOpenFileName(this, tr("Open image file"), "", tr("Image files (*.bmp)"));
+    if (imageFileName.isEmpty())
         return;
-    QImage image(filename);
+    QImage image(imageFileName);
     ui->spinBox_X1->setMaximum(image.width());
     ui->spinBox_Y1->setMaximum(image.height());
     ui->spinBox_X2->setMaximum(image.width());
@@ -128,7 +128,7 @@ void MainWindow::on_actionOpen_triggered()
     QPair<int, double> id = vp->processImageCV(image);
     ui->label_light->setNum(id.first);
     ui->label_mean->setNum(id.second);
-    ui->imagearea->open(filename);
+    ui->imagearea->open(imageFileName);
 }
 
 /*!
@@ -177,8 +177,8 @@ void MainWindow::setBounds(QRect rect)
     vp->setThreshold(ui->spinBox->value());
     vp->setRect(rect);
 
-    if (!filename.isNull()) {
-        QImage image(filename);
+    if (!imageFileName.isNull()) {
+        QImage image(imageFileName);
         QPair<int, double> id = vp->processImageCV(image);
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
@@ -195,7 +195,7 @@ void MainWindow::setBounds(QRect rect)
  */
 void MainWindow::setMaxMinBounds(QRect rect)
 {
-    if (!filename.isNull()) {
+    if (!imageFileName.isNull()) {
         ui->label_left->setNum(rect.left());
         ui->label_top->setNum(rect.top());
         ui->label_right->setNum(rect.right());
@@ -257,17 +257,16 @@ void MainWindow::on_actionSetup_triggered(bool checked)
  */
 void MainWindow::on_actionOpen_Video_triggered()
 {
-    filename.clear();
-    fileNameV = QFileDialog::getOpenFileName(this, tr("Open data file"), "", tr("Video files (*.avi)"));
-    if (fileNameV.isEmpty())
+    imageFileName.clear();
+    videoFileName = QFileDialog::getOpenFileName(this, tr("Open data file"), "", tr("Video files (*.avi)"));
+    if (videoFileName.isEmpty())
         return;
-    VideoCapture capture(fileNameV.toStdString().c_str());
-    //CvCapture* capture = cvCaptureFromAVI(fileNameV.toStdString().c_str());
+    cv::VideoCapture capture(videoFileName.toStdString().c_str());
     if (!capture.isOpened()) {
         QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
     } else {
-        vp->setFilename(fileNameV);
-        Mat frame;
+        vp->setFilename(videoFileName);
+        cv::Mat frame;
         capture.read(frame);
         QImage image = vp->Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
@@ -284,7 +283,7 @@ void MainWindow::on_actionOpen_Video_triggered()
  */
 void MainWindow::displayResultsL(const QVector<int>& res, const QVector<double>& t)
 {
-    this->res = res;
+    this->lightPixelsNumbers = res;
     ui->l_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
     ui->l_plot->replot();
 
@@ -297,8 +296,8 @@ void MainWindow::displayResultsL(const QVector<int>& res, const QVector<double>&
     }
 
     QwtPointSeriesData* data = new QwtPointSeriesData(points);
-    curve.setData(data);
-    curve.attach(ui->l_plot);
+    lightsNumbersPlot.curve.setData(data);
+    lightsNumbersPlot.curve.attach(ui->l_plot);
     ui->l_plot->replot();
 }
 
@@ -308,7 +307,7 @@ void MainWindow::displayResultsL(const QVector<int>& res, const QVector<double>&
  */
 void MainWindow::displayResultsM(const QVector<double>& res, const QVector<double>& t)
 {
-    this->resm = res;
+    this->lightPixelsMeans = res;
     ui->m_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
     ui->m_plot->replot();
 
@@ -321,8 +320,8 @@ void MainWindow::displayResultsM(const QVector<double>& res, const QVector<doubl
     }
 
     QwtPointSeriesData* data = new QwtPointSeriesData(points);
-    curve1.setData(data);
-    curve1.attach(ui->m_plot);
+    lightsMeansPlot.curve.setData(data);
+    lightsMeansPlot.curve.attach(ui->m_plot);
     ui->m_plot->replot();
 }
 
@@ -333,7 +332,7 @@ void MainWindow::on_actionRun_triggered()
 {
     ui->progressBar->show();
     ui->label_8->show();
-    if (!fileNameV.isNull()) {
+    if (!videoFileName.isNull()) {
         vp->setThreshold(ui->spinBox->value());
         vp->setRect(ui->imagearea->getBounds());
         QThreadPool::globalInstance()->start(vp);
@@ -350,8 +349,8 @@ void MainWindow::on_actionSave_triggered()
     QFile file(name);
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
-        for (int i = 0; i < res.size(); ++i) {
-            str << i << " " << res[i] << " " << resm[i] << '\n';
+        for (int i = 0; i < lightPixelsNumbers.size(); ++i) {
+            str << i << " " << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
         }
     } else {
         QMessageBox::warning(this, "Warning!", "Can not open file for writing!");
@@ -385,15 +384,9 @@ void MainWindow::progress(int value)
  */
 void MainWindow::time(double value)
 {
-    /*if(value < 60){*/
-    //ui->label_8->setText(QString::number(value,'g',2)+"s");
-    /*}else if(value < 3600){
-        ui->label_8->setText(QString::number((int)value/60)+"m"+QString::number((int)value%60)+"s");
-    }*/
-    QString s = (int)value % 60 < 10 ? "0" + QString::number((int)value % 60) : QString::number((int)value % 60);
-    QString m = (int)value % 3600 / 60 < 10 ? "0" + QString::number((int)value % 3600 / 60) : QString::number((int)value % 3600 / 60);
-    QString h = QString::number((int)value / 3600);
-    //QString ms = QString::number((((double)(int)value)-value),'g',2);
+    QString s = int(value) % 60 < 10 ? "0" + QString::number(int(value) % 60) : QString::number(int(value) % 60);
+    QString m = int(value) % 3600 / 60 < 10 ? "0" + QString::number(int(value) % 3600 / 60) : QString::number(int(value) % 3600 / 60);
+    QString h = QString::number(int(value) / 3600);
     ui->label_8->setText(h + ":" + m + ":" + s);
 }
 
@@ -440,9 +433,9 @@ void MainWindow::on_actionAbout_triggered()
 {
     QString cv;
 #if defined(__GNUC__) || defined(__GNUG__)
-	cv = "GCC "+QString::number(__GNUC__)+"."+QString::number(__GNUC_MINOR__)+"."+QString::number(__GNUC_PATCHLEVEL__);
+	cv = "GCC " + QString::number(__GNUC__) + "."+QString::number(__GNUC_MINOR__) + "."+QString::number(__GNUC_PATCHLEVEL__);
 #elif defined(_MSC_VER)
-	cv = "MSVC "+QString::number(__MSC_FULL_VER__);
+	cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"R", "Lab-on-a-chip light analyser. © 2013-2014\nQt version: "+QString(QT_VERSION_STR)+"\nCompiler Version: "+cv);
+    QMessageBox::about(this,"R", "Lab-on-a-chip light analyser. © 2013-2014\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }

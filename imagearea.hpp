@@ -48,7 +48,6 @@ public:
 private:
     QVector<int> res;
     QVector<double> resm;
-    //int scan(QVector<Point>& v);
     Ui::ImageArea *ui;
     QImage image, tmpimage;
     bool rectdrawing;

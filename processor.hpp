@@ -7,10 +7,7 @@
 #include <QPainter>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/photo/photo.hpp>
 #include <iostream>
-
-using namespace cv;
 
 /*!
  * \brief The Processor class
@@ -18,11 +15,14 @@ using namespace cv;
 class Processor : public QObject, public QRunnable
 {
     Q_OBJECT
+    
+    typedef std::vector<cv::Point> Contour;
+    typedef std::vector<Contour> Contours;
 public:
     explicit Processor(QObject* parent = 0);
-    void setFilename(QString _filename){filename = _filename;}
-    void setThreshold(int _threshold){threshold = _threshold;}
-    void setRect(QRect _rect){rect = _rect;}
+    void setFilename(QString _filename){ filename = _filename; }
+    void setThreshold(int _threshold){ lightThreshold = _threshold; }
+    void setRect(QRect _rect){ rect = _rect; }
     void setAd(bool _ad) { ad = _ad; }
     void run();
     QImage Mat2QImage(const cv::Mat &src);
@@ -49,15 +49,15 @@ private:
 private:
     QString filename;
     QRect rect;
-    unsigned int threshold;
+    unsigned int lightThreshold;
     double start, end;
     volatile bool stop;
     bool ad;
     cv::Mat QImage2Mat(const QImage &src);
-    double mean(cv::Mat image, std::vector<cv::Point> contour);
+    double mean(cv::Mat image, Contour contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);
-    QImage drawOnQImage(QImage image, std::vector<std::vector<cv::Point>> contours);
-    QRect autoDetect();
+    QImage drawOnQImage(QImage image, Contours contours);
+    QRect autoDetectLight();
 };
 
 #endif // VIDEOPROCESSOR_H

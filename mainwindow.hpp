@@ -26,6 +26,12 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
     
+    struct QwtToolSet {
+        QwtPlotMagnifier *mag;
+        QwtPlotZoomer *zoom;
+        QwtPlotCurve curve;
+    };
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -44,8 +50,8 @@ private slots:
     void on_spinBox_Y2_valueChanged(int arg1);
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
-    void displayResultsL(const QVector<int> &res,const QVector<double> &t);
-    void displayResultsM(const QVector<double> &res,const QVector<double> &t);
+    void displayResultsL(const QVector<int> &lightPixelsNumbers,const QVector<double> &t);
+    void displayResultsM(const QVector<double> &lightPixelsNumbers,const QVector<double> &t);
     void on_actionRun_triggered();
     void on_actionSave_triggered();
     void on_actionStop_triggered();  
@@ -63,22 +69,18 @@ signals:
     void stop();
 
 private:
-    QVector<int> res;
-    QVector<double> resm;
-    QwtPlotMagnifier *mag;
-    QwtPlotZoomer *zoom;
-    QwtPlotCurve curve;
+    QVector<int> lightPixelsNumbers;
+    QVector<double> lightPixelsMeans;
     
-    QwtPlotMagnifier *mag1;
-    QwtPlotZoomer *zoom1;
-    QwtPlotCurve curve1;
+    QwtToolSet lightsNumbersPlot;
+    QwtToolSet lightsMeansPlot;
     
     Ui::MainWindow *ui;
     Processor *vp;
 
-    QString filename;
-    QString fileNameV;
-    void initPlot(QwtPlot *plot, QwtPlotMagnifier *mag, QwtPlotZoomer *zoom, QwtPlotCurve &curve, QString title, QString xlabel, QString ylabel);
+    QString imageFileName;
+    QString videoFileName;
+    void initPlot(QwtPlot *plot, QwtToolSet& toolset, QString title, QString xlabel, QString ylabel);
 };
 
 #endif // MAINWINDOW_HPP

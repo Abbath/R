@@ -28,7 +28,7 @@ HEADERS  += mainwindow.hpp \
 FORMS    += mainwindow.ui \
     imagearea.ui
 unix{
-LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_photo -L"/usr/local/qwt-6.1.0/lib" -lqwt
+LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
 QMAKE_CXXFLAGS += -std=c++0x
 }
@@ -58,6 +58,3 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_imgproc249
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_imgproc249d
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_photo249
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_photo249d

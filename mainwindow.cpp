@@ -22,6 +22,9 @@ MainWindow::MainWindow(QWidget* parent)
     ui->progressBar->hide();
     ui->label_8->hide();
     ui->imagearea->setDisabled(true);
+    sens = new QSpinBox(this);
+    ui->mainToolBar->addWidget(sens);
+    sens->setValue(60);
     
     initPlot(ui->l_plot, lightsNumbersPlot, QString("Lights"), QString("Time [s]"), QString("Points"));
     initPlot(ui->m_plot, lightsMeansPlot, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
@@ -42,16 +45,16 @@ MainWindow::MainWindow(QWidget* parent)
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
     
-    connect(vp, SIGNAL(graphL(QVector<int>, QVector<double>)), this, SLOT(displayResultsL(QVector<int>, QVector<double>))/*, Qt::QueuedConnection*/);
-    connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(graphL(QVector<int>, QVector<double>)), this, SLOT(displayResultsL(QVector<int>, QVector<double>)));
+    connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>)));
     connect(vp, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
-    connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage))/*, Qt::QueuedConnection*/);
-    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect))/*, Qt::QueuedConnection*/);
-    connect(this, SIGNAL(stop()), vp, SLOT(stopThis())/*, Qt::QueuedConnection*/);
-    connect(vp, SIGNAL(maxMinBounds(QRect)), this, SLOT(setMaxMinBounds(QRect))/*, Qt::QueuedConnection*/);
-    connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int))/*, Qt::QueuedConnection*/);
+    connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)));
+    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect)));
+    connect(this, SIGNAL(stop()), vp, SLOT(stopThis()));
+    connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int)));
     connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(vp, SIGNAL(detection()), this, SLOT(detection()));
+    connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
     this->showMaximized();
 }
 
@@ -125,6 +128,9 @@ void MainWindow::on_actionOpen_triggered()
         videoFileName.clear();
         imageFileName = newImageFileName;
         QImage image(imageFileName);
+        if(image.isNull()){
+            return;
+        }
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
@@ -194,20 +200,6 @@ void MainWindow::setBounds(QRect rect)
         QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
-    }
-}
-
-/*!
- * \brief MainWindow::setMaxMinBounds
- * \param rect
- */
-void MainWindow::setMaxMinBounds(QRect rect)
-{
-    if (!imageFileName.isNull()) {
-        ui->label_left->setNum(rect.left());
-        ui->label_top->setNum(rect.top());
-        ui->label_right->setNum(rect.right());
-        ui->label_bot->setNum(rect.bottom());
     }
 }
 
@@ -466,4 +458,9 @@ void MainWindow::on_actionAbout_triggered()
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
     QMessageBox::about(this,"R", "Lab-on-a-chip light analyser. © 2013-2014\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+}
+
+void MainWindow::sensChanged(int value)
+{
+    vp->setSensitivity(value);
 }

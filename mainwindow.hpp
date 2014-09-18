@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QtCore>
 #include <QtGui>
+#include <QtWidgets>
 #include "imagearea.hpp"
 #include "processor.hpp"
 #include <qwt_plot.h>
@@ -38,7 +39,6 @@ public:
 public slots:
     void setProcessor(Processor * p) { vp = p; }
     void setBounds(QRect rect);
-    void setMaxMinBounds(QRect rect);
 private slots:
     void on_horizontalSlider_valueChanged(int value);
     void on_actionOpen_triggered();
@@ -63,11 +63,12 @@ private slots:
     void detection();
     void on_actionAutodetection_triggered(bool checked);
     void on_actionAbout_triggered();
-
+    void sensChanged(int value);
 signals:
     void stop();
 
 private:
+    QSpinBox* sens;
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
     

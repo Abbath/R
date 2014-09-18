@@ -12,6 +12,12 @@ unsigned int Processor::qrgbToGray(QRgb rgb)
     return (color.red() + color.green() + color.blue()) / 3;
 }
 
+void Processor::setSensitivity(unsigned int value)
+{
+    sensitivity = value;
+}
+
+
 /*!
  * \brief Processor::getEnd
  * \return 
@@ -52,7 +58,7 @@ void Processor::setStart(double value)
  * \brief Processor::Processor
  * \param parent
  */
-Processor::Processor(QObject* parent) : QObject( parent ), lightThreshold(255), start(-1), end(-1), stop(false), ad(false)
+Processor::Processor(QObject* parent) : QObject( parent ), lightThreshold(255), start(-1), end(-1), stop(false), ad(false), sensitivity(60)
 {
     setAutoDelete(false);
 }
@@ -107,6 +113,7 @@ void Processor::run()
     if(start >= end && start > std::numeric_limits<double>::epsilon() && end > std::numeric_limits<double>::epsilon() ){
         return;
     }
+    
     int absIndex = 0;
     
     for(int i = 0; i < int(start * fps); ++i, ++absIndex){
@@ -164,6 +171,9 @@ void Processor::run()
  */
 QPair<int, double> Processor::processImageCV(QImage _image)
 {
+    if(_image.isNull()){
+        return qMakePair(0, 0);
+    }
     cv::Mat m = QImage2Mat(_image);
     return processImageCVMat(m);
 }
@@ -206,7 +216,7 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
         lightMean = lightThreshold;
     }
     
-    emit frameChanged(drawOnQImage(Mat2QImage(matCopy),contours));
+    emit frameChanged(drawOnQImage(Mat2QImage(matCopy), contours));
     
     QPair<int, double> result(lightArea, lightMean);
     
@@ -217,7 +227,7 @@ QImage Processor::drawOnQImage(QImage image, Contours contours)
 {
     QPainter p;
     p.begin(&image);
-    p.setPen(QPen(QColor(0,255,0)));
+    p.setPen(QPen(QColor(0, 255, 0)));
     
     for(auto contourIt = contours.begin(); contourIt != contours.end(); ++contourIt){
         for(auto pointIt = contourIt->begin(); pointIt != (contourIt->end() - 1); ++pointIt){
@@ -320,27 +330,47 @@ QRect Processor::autoDetectLight(){
     int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
     int fps = capture.get(CV_CAP_PROP_FPS); 
     
+    fixRange(fps, frameNumber);
+    
+    if(start >= end && start > std::numeric_limits<double>::epsilon() && end > std::numeric_limits<double>::epsilon() ){
+        return rect;
+    }
+    unsigned absIndex = 0;
+    
+    for(auto i = 0; i < (start * fps); ++i, ++absIndex){
+        if(!capture.grab()){
+            QMessageBox::warning(0, "Error", "Grab failed\n");
+            return rect;
+        }
+    }
+    
     capture.read(oldframe);
     capture.read(frame);
     
-    unsigned threshold = 40;
-    
     cv::absdiff(frame, oldframe, dif);
-    cv::threshold(dif, dif, threshold, 255, cv::THRESH_BINARY);
+    cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
     
     cv::Mat tmp = dif.clone();
     
-    for(int i = 2; i < frameNumber; ++i){
+    for(int i = (start * fps) + 2; i < (end * fps); ++i){
+        if (stop) {
+            break;
+        }
+        absIndex++;
         if(i % fps == 0){
             oldframe = frame.clone();
             capture >> frame;
             cv::absdiff(frame, oldframe, dif);
-            cv::threshold(dif, dif, threshold, 255, cv::THRESH_BINARY);
-            cv::bitwise_or(dif,tmp,tmp);
-            emit progress(i/(double(frameNumber)/100));
+            cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
+            cv::bitwise_or(dif, tmp, tmp);
+            
+            int relIndex = absIndex - int(start * fps);
+            
+            emit progress(relIndex / (fps * (end-start) / 100.0));
         }else{
             capture.grab();
         }
+        QThread::currentThread()->usleep(50);
     }
     
     cv::flip(tmp, tmp, 0);

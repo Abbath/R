@@ -34,6 +34,8 @@ public:
     void setEnd(double value);
     
     void fixRange(int fps, int frameNumber);
+    void setSensitivity(unsigned int value);
+    
 signals:
     void frameChanged(QImage frame);
     void rectChanged(QRect rect);
@@ -54,6 +56,7 @@ private:
     double start, end;
     volatile bool stop;
     bool ad;
+    unsigned int sensitivity;
     cv::Mat QImage2Mat(const QImage &src);
     double mean(cv::Mat image, Contour contour);
     QPair<int, double> processImageCVMat(cv::Mat &m);

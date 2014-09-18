@@ -22,7 +22,7 @@ public:
     explicit Processor(QObject* parent = 0);
     void setFilename(QString _filename){ filename = _filename; }
     void setThreshold(int _threshold){ lightThreshold = _threshold; }
-    void setRect(QRect _rect){ rect = _rect; }
+    void setBounds(QRect _rect){ rect = _rect; }
     void setAd(bool _ad) { ad = _ad; }
     void run();
     QImage Mat2QImage(const cv::Mat &src);
@@ -33,6 +33,7 @@ public:
     double getEnd() const;
     void setEnd(double value);
     
+    void fixRange(int fps, int frameNumber);
 signals:
     void frameChanged(QImage frame);
     void rectChanged(QRect rect);

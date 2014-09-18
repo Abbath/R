@@ -60,6 +60,28 @@ Processor::Processor(QObject* parent) : QObject( parent ), lightThreshold(255), 
 /*!
  * \brief Processor::run
  */
+void Processor::fixRange(int fps, int frameNumber)
+{
+    if(start == -1){
+        start = 0;
+    }    
+    if(end == -1){
+        end = frameNumber / double(fps);
+    }
+    if(start*fps > frameNumber){
+        start = frameNumber;
+    }
+    if(end*fps > frameNumber){
+        end = frameNumber;
+    }
+    if(start < 0.0){
+        start = 0;
+    }
+    if(end < 0.0){
+        end = 0;
+    }    
+}
+
 void Processor::run()
 {
     QVector<int> lightPixelsNumbers;
@@ -76,18 +98,15 @@ void Processor::run()
         QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
         return;
     }
-    
-    int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
+
+    int frameNumber = int(capture.get(CV_CAP_PROP_FRAME_COUNT));
     int fps = capture.get(CV_CAP_PROP_FPS); 
     
-    if(start == -1){
-        start = 0;
-    }
+    fixRange(fps, frameNumber);
     
-    if(end == -1){
-        end = frameNumber / double(fps);
+    if(start >= end && start > std::numeric_limits<double>::epsilon() && end > std::numeric_limits<double>::epsilon() ){
+        return;
     }
-    
     int absIndex = 0;
     
     for(int i = 0; i < int(start * fps); ++i, ++absIndex){
@@ -168,17 +187,23 @@ QPair<int, double> Processor::processImageCVMat(cv::Mat& m){
     cv::findContours(m, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
     
     double lightArea = 0, lightMean = 0;
-    
-    for(auto c: contours){
-        lightArea += cv::contourArea(c);
+        
+    for (auto& c : contours){
+        auto localLightArea = cv::contourArea(c);
+        lightArea += localLightArea;
+        
+        for(auto& p: c){
+            p.x += rec.x;
+            p.y += rec.y;
+        }
+        
+        lightMean += localLightArea * mean(matCopy, c);
     }
     
-    for (unsigned i = 0; i < contours.size(); i++){
-        for(auto& p: contours[i]){
-            p.x += rec.x;
-            p.y +=rec.y;
-        }
-        lightMean += mean(matCopy,contours[i]);
+    lightMean /= lightArea;
+    
+    if(lightMean < lightThreshold){
+        lightMean = lightThreshold;
     }
     
     emit frameChanged(drawOnQImage(Mat2QImage(matCopy),contours));
@@ -200,7 +225,6 @@ QImage Processor::drawOnQImage(QImage image, Contours contours)
         }
         p.drawLine((contourIt->end() - 1)->x, (contourIt->end() - 1)->y, (contourIt->begin())->x, (contourIt->begin())->y);
     }
-    
     return image;
 }
 
@@ -273,9 +297,8 @@ double Processor::mean(cv::Mat image, Contour contour){
     cv::drawContours(mask, Contours(1, contour), -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
     
     auto mean(cv::mean(crop, mask));
-    auto sum(cv::sum(mean));
-    
-    return sum[0];
+
+    return mean[0];
 }
 
 /*!

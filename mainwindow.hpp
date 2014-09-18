@@ -62,9 +62,8 @@ private slots:
     void on_actionQuit_triggered();
     void detection();
     void on_actionAutodetection_triggered(bool checked);
-    
     void on_actionAbout_triggered();
-    
+
 signals:
     void stop();
 
@@ -80,6 +79,8 @@ private:
 
     QString imageFileName;
     QString videoFileName;
+    
+    bool isRunning;
     void initPlot(QwtPlot *plot, QwtToolSet& toolset, QString title, QString xlabel, QString ylabel);
 };
 

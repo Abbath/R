@@ -230,7 +230,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>End</string>
+          <string>End [s]</string>
          </property>
         </widget>
        </item>
@@ -256,7 +256,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Start</string>
+          <string>Start [s]</string>
          </property>
         </widget>
        </item>

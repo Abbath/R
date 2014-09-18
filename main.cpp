@@ -1,5 +1,4 @@
 #include "mainwindow.hpp"
-#include "processor.hpp"
 #include <QApplication>
 
 /*!

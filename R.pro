@@ -13,7 +13,6 @@ qtHaveModule(opengl) {
 TARGET = R
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         mainwindow.cpp \
 #    mainwidget.cpp \
@@ -27,6 +26,7 @@ HEADERS  += mainwindow.hpp \
 
 FORMS    += mainwindow.ui \
     imagearea.ui
+
 unix{
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
 INCLUDEPATH += "/usr/local/qwt-6.1.0/include"
@@ -38,7 +38,6 @@ INCLUDEPATH += "D:\opencv\build\include"
 INCLUDEPATH += "D:\qwt-6.1.0\qwt-6.1.0\qwt"
 }
 
-
 RESOURCES += \
     shaders.qrc
 
@@ -48,7 +47,6 @@ OTHER_FILES += \
 
 win32:CONFIG(release, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwt
 else:win32:CONFIG(debug, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwtd
-
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_core249
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../opencv/build/x86/vc12/lib/ -lopencv_core249d

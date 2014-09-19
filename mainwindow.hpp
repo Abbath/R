@@ -36,6 +36,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void openVideo();
+    void openImage();
 public slots:
     void setProcessor(Processor * p) { vp = p; }
     void setBounds(QRect rect);
@@ -50,8 +52,8 @@ private slots:
     void on_spinBox_Y2_valueChanged(int arg1);
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
-    void displayResultsL(const QVector<int> &lightPixelsNumbers,const QVector<double> &t);
-    void displayResultsM(const QVector<double> &lightPixelsNumbers,const QVector<double> &t);
+    void displayResultsL(const QVector<int> &lightPixelsNumbers, const QVector<double> &t);
+    void displayResultsM(const QVector<double> &lightPixelsNumbers, const QVector<double> &t);
     void on_actionRun_triggered();
     void on_actionSave_triggered();
     void on_actionStop_triggered();  
@@ -64,11 +66,13 @@ private slots:
     void on_actionAutodetection_triggered(bool checked);
     void on_actionAbout_triggered();
     void sensChanged(int value);
+    void periodChanged(double value);
 signals:
     void stop();
 
 private:
     QSpinBox* sens;
+    QDoubleSpinBox* period;
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
     

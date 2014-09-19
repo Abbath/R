@@ -23,8 +23,14 @@ MainWindow::MainWindow(QWidget* parent)
     ui->label_8->hide();
     ui->imagearea->setDisabled(true);
     sens = new QSpinBox(this);
+    ui->mainToolBar->addWidget(new QLabel("Sens.", this));
     ui->mainToolBar->addWidget(sens);
     sens->setValue(60);
+    period = new QDoubleSpinBox(this);
+    ui->mainToolBar->addWidget(new QLabel("Period",this));
+    ui->mainToolBar->addWidget(period);
+    period->setMinimum(0.1);
+    period->setValue(1.0);
     
     initPlot(ui->l_plot, lightsNumbersPlot, QString("Lights"), QString("Time [s]"), QString("Points"));
     initPlot(ui->m_plot, lightsMeansPlot, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
@@ -55,6 +61,7 @@ MainWindow::MainWindow(QWidget* parent)
     connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(vp, SIGNAL(detection()), this, SLOT(detection()));
     connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
+    connect(period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
     this->showMaximized();
 }
 
@@ -118,19 +125,12 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
 /*!
  * \brief MainWindow::on_actionOpen_triggered
  */
-void MainWindow::on_actionOpen_triggered()
+void MainWindow::openImage()
 {
-    if(!isRunning){
-        auto newImageFileName = QFileDialog::getOpenFileName(this, tr("Open image file"), "", tr("Image files (*.bmp)"));
-        if(newImageFileName.isEmpty() || newImageFileName.isNull() || newImageFileName == imageFileName){
-            return;
-        }
-        videoFileName.clear();
-        imageFileName = newImageFileName;
-        QImage image(imageFileName);
-        if(image.isNull()){
-            return;
-        }
+    QImage image(imageFileName);
+    if(image.isNull()){
+        QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");            
+    }else{
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
@@ -142,6 +142,22 @@ void MainWindow::on_actionOpen_triggered()
         QPair<int, double> id = vp->processImageCV(image);
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
+    }    
+}
+
+/*!
+ * \brief MainWindow::on_actionOpen_triggered
+ */
+void MainWindow::on_actionOpen_triggered()
+{
+    if(!isRunning){
+        auto newImageFileName = QFileDialog::getOpenFileName(this, tr("Open image file"), "", tr("Image files (*.bmp)"));
+        if(newImageFileName.isEmpty() || newImageFileName.isNull() || newImageFileName == imageFileName){
+            return;
+        }
+        videoFileName.clear();
+        imageFileName = newImageFileName;
+        openImage();
     }
 }
 
@@ -169,9 +185,12 @@ void MainWindow::on_action3D_triggered(bool checked)
 void MainWindow::on_pushButton_clicked()
 {
     QFile file("bounds.conf");
-    file.open(QFile::WriteOnly | QFile::Truncate);
-    QTextStream str(&file);
-    str << ui->spinBox_X1->value() << "\n" << ui->spinBox_Y1->value() << "\n" << ui->spinBox_X2->value() << "\n" << ui->spinBox_Y2->value();
+    if(file.open(QFile::WriteOnly | QFile::Truncate)){
+        QTextStream str(&file);
+        str << ui->spinBox_X1->value() << "\n" << ui->spinBox_Y1->value() << "\n" << ui->spinBox_X2->value() << "\n" << ui->spinBox_Y2->value();
+    }else{
+        QMessageBox::warning(this, "Error", "Failed to save bounds!");
+    }
 }
 
 /*!
@@ -193,9 +212,13 @@ void MainWindow::setBounds(QRect rect)
     
     if (!imageFileName.isNull()) {
         QImage image(imageFileName);
-        QPair<int, double> id = vp->processImageCV(image);
-        ui->label_light->setNum(id.first);
-        ui->label_mean->setNum(id.second);
+        if(!image.isNull()){
+            QPair<int, double> id = vp->processImageCV(image);
+            ui->label_light->setNum(id.first);
+            ui->label_mean->setNum(id.second);
+        }else{
+            QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");                        
+        }
     } else if(!videoFileName.isNull()){
         QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
         ui->label_light->setNum(id.first);
@@ -260,6 +283,31 @@ void MainWindow::on_actionSetup_triggered(bool checked)
 /*!
  * \brief MainWindow::on_actionOpen_Video_triggered
  */
+void MainWindow::openVideo()
+{
+    cv::VideoCapture capture(videoFileName.toStdString().c_str());
+    if (!capture.isOpened()) {
+        QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
+    } else {
+        auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
+        auto fps = capture.get(CV_CAP_PROP_FPS);
+        auto videoLength = frameNumber / double(fps);
+        ui->doubleSpinBox_2->setMaximum(videoLength);
+        ui->doubleSpinBox_3->setMaximum(videoLength);
+        period->setMaximum(videoLength);
+        vp->setFilename(videoFileName);
+        cv::Mat frame;
+        capture.read(frame);
+        QImage image = vp->Mat2QImage(frame);
+        ui->spinBox_X1->setMaximum(image.width());
+        ui->spinBox_Y1->setMaximum(image.height());
+        ui->spinBox_X2->setMaximum(image.width());
+        ui->spinBox_Y2->setMaximum(image.height());
+        ui->imagearea->setEnabled(true);
+        ui->imagearea->loadImage(image.mirrored(false, true));
+    }    
+}
+
 void MainWindow::on_actionOpen_Video_triggered()
 {
     if(!isRunning){
@@ -269,26 +317,7 @@ void MainWindow::on_actionOpen_Video_triggered()
         }
         imageFileName.clear();
         videoFileName = newVideoFileName;
-        cv::VideoCapture capture(videoFileName.toStdString().c_str());
-        if (!capture.isOpened()) {
-            QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
-        } else {
-            auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-            auto fps = capture.get(CV_CAP_PROP_FPS);
-            auto videoLength = frameNumber / double(fps);
-            ui->doubleSpinBox_2->setMaximum(videoLength);
-            ui->doubleSpinBox_3->setMaximum(videoLength);
-            vp->setFilename(videoFileName);
-            cv::Mat frame;
-            capture.read(frame);
-            QImage image = vp->Mat2QImage(frame);
-            ui->spinBox_X1->setMaximum(image.width());
-            ui->spinBox_Y1->setMaximum(image.height());
-            ui->spinBox_X2->setMaximum(image.width());
-            ui->spinBox_Y2->setMaximum(image.height());
-            ui->imagearea->setEnabled(true);
-            ui->imagearea->loadImage(image.mirrored(false, true));
-        }
+        openVideo();
     }
 }
 
@@ -364,6 +393,9 @@ void MainWindow::on_actionRun_triggered()
 void MainWindow::on_actionSave_triggered()
 {
     QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Text (*.txt)");
+    if(name.isEmpty() || name.isNull()){
+        return;
+    }
     QFile file(name);
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
@@ -442,6 +474,7 @@ void MainWindow::on_actionQuit_triggered()
 void MainWindow::detection()
 {
     ui->label_8->setText("Detection...");
+    isRunning = true;
 }
 
 void MainWindow::on_actionAutodetection_triggered(bool checked)
@@ -453,14 +486,23 @@ void MainWindow::on_actionAbout_triggered()
 {
     QString cv;
 #if defined(__GNUC__) || defined(__GNUG__)
-    cv = "GCC " + QString::number(__GNUC__) + "."+QString::number(__GNUC_MINOR__) + "."+QString::number(__GNUC_PATCHLEVEL__);
+    cv = "GCC " + QString::number(__GNUC__) + "." + QString::number(__GNUC_MINOR__) + "."+QString::number(__GNUC_PATCHLEVEL__);
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"R", "Lab-on-a-chip light analyser. © 2013-2014\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.2\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
+/*!
+ * \brief MainWindow::sensChanged
+ * \param value
+ */
 void MainWindow::sensChanged(int value)
 {
     vp->setSensitivity(value);
+}
+
+void MainWindow::periodChanged(double value)
+{
+    vp->setPeriod(value);
 }

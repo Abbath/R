@@ -39,12 +39,13 @@ MainWindow::MainWindow(QWidget* parent)
     imageProcessor = new ImageProcessor(this);
     videoProcessor->setImageProcessor(imageProcessor);
     
-    ui->imagearea->readConfig("bounds.conf");
+    readSettings();
+
     QRect bounds = ui->imagearea->getBounds();
-    ui->spinBox_X1->setMaximum(bounds.left());
-    ui->spinBox_Y1->setMaximum(bounds.top());
-    ui->spinBox_X2->setMaximum(bounds.right());
-    ui->spinBox_Y2->setMaximum(bounds.bottom());
+//    ui->spinBox_X1->setMaximum(bounds.left());
+//    ui->spinBox_Y1->setMaximum(bounds.top());
+//    ui->spinBox_X2->setMaximum(bounds.right());
+//    ui->spinBox_Y2->setMaximum(bounds.bottom());
     ui->spinBox_X1->setValue(bounds.left());
     ui->spinBox_Y1->setValue(bounds.top());
     ui->spinBox_X2->setValue(bounds.right());
@@ -93,11 +94,41 @@ void MainWindow::initPlot(QwtPlot* plot, QwtToolSet &toolset, QString title, QSt
 }
 
 /*!
+ * \brief MainWindow::writeSettings
+ */
+void MainWindow::writeSettings()
+{
+    QSettings settings("CAD", "R");
+    settings.beginGroup("MW");
+    settings.setValue("threshold", ui->spinBox->value());
+    settings.setValue("ad", ui->actionAutodetection->isChecked());
+    settings.setValue("sens", sens->value());
+    settings.setValue("period", period->value());
+    settings.setValue("bounds", ui->imagearea->getBounds());
+    settings.endGroup();
+}
+
+/*!
+ * \brief MainWindow::readSettings
+ */
+void MainWindow::readSettings()
+{
+    QSettings settings("CAD", "R");
+    ui->spinBox->setValue(settings.value("MW/threshold").toInt());
+    ui->actionAutodetection->setChecked(settings.value("MW/ad").toBool());
+    sens->setValue(settings.value("MW/sens").toUInt());
+    period->setValue(settings.value("MW/period").toDouble());
+    setBounds(settings.value("MW/bounds").toRect());
+    ui->imagearea->setBounds(settings.value("MW/bounds").toRect());
+}
+
+/*!
  * \brief MainWindow::~MainWindow
  */
 MainWindow::~MainWindow()
 {
     videoProcessor->stopThis();
+    writeSettings();
     delete ui;
 }
 
@@ -107,19 +138,21 @@ MainWindow::~MainWindow()
  */
 void MainWindow::on_horizontalSlider_valueChanged(int value)
 {
-    if (ui->action3D->isChecked()) {
-        //ui->widget_3d->setStep((float)value/255.0);
-    } else {
-        imageProcessor->setLightThreshold(value);
-        if (!imageFileName.isNull()) {
-            QImage image(imageFileName);
-            QPair<int, double> id = imageProcessor->processImage(image);
-            ui->label_light->setNum(id.first);
-            ui->label_mean->setNum(id.second);
-        } else if(!videoFileName.isNull()){
-            QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
-            ui->label_light->setNum(id.first);
-            ui->label_mean->setNum(id.second);
+    if(!isRunning){
+        if (ui->action3D->isChecked()) {
+            //ui->widget_3d->setStep((float)value/255.0);
+        } else {
+            imageProcessor->setLightThreshold(value);
+            if (!imageFileName.isNull()) {
+                QImage image(imageFileName);
+                QPair<int, double> id = imageProcessor->processImage(image);
+                ui->label_light->setNum(id.first);
+                ui->label_mean->setNum(id.second);
+            } else if(!videoFileName.isNull()){
+                QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
+                ui->label_light->setNum(id.first);
+                ui->label_mean->setNum(id.second);
+            }
         }
     }
 }
@@ -201,30 +234,32 @@ void MainWindow::on_pushButton_clicked()
  */
 void MainWindow::setBounds(QRect rect)
 {
-    ui->spinBox_X1->setValue(rect.left());
-    ui->spinBox_Y1->setValue(rect.top());
-    ui->spinBox_X2->setValue(rect.right());
-    ui->spinBox_Y2->setValue(rect.bottom());
-    if (ui->action3D->isChecked()) {
-        //    ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
-        //    ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
-    }
-    imageProcessor->setLightThreshold(ui->spinBox->value());
-    imageProcessor->setBounds(rect);
-    
-    if (!imageFileName.isNull()) {
-        QImage image(imageFileName);
-        if(!image.isNull()){
-            QPair<int, double> id = imageProcessor->processImage(image);
+    if(!isRunning){
+        ui->spinBox_X1->setValue(rect.left());
+        ui->spinBox_Y1->setValue(rect.top());
+        ui->spinBox_X2->setValue(rect.right());
+        ui->spinBox_Y2->setValue(rect.bottom());
+        if (ui->action3D->isChecked()) {
+            //    ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
+            //    ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
+        }
+        imageProcessor->setLightThreshold(ui->spinBox->value());
+        imageProcessor->setBounds(rect);
+        
+        if (!imageFileName.isNull()) {
+            QImage image(imageFileName);
+            if(!image.isNull()){
+                QPair<int, double> id = imageProcessor->processImage(image);
+                ui->label_light->setNum(id.first);
+                ui->label_mean->setNum(id.second);
+            }else{
+                QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");                        
+            }
+        } else if(!videoFileName.isNull()){
+            QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
-        }else{
-            QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");                        
         }
-    } else if(!videoFileName.isNull()){
-        QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
-        ui->label_light->setNum(id.first);
-        ui->label_mean->setNum(id.second);
     }
 }
 
@@ -294,12 +329,15 @@ void MainWindow::openVideo()
         auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
         auto fps = capture.get(CV_CAP_PROP_FPS);
         auto videoLength = frameNumber / double(fps);
+        cv::Mat frame;
+        if(!capture.read(frame)){
+            QMessageBox::warning(this, "Error", "Can not read from video file!");
+            return;
+        }
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
         period->setMaximum(videoLength);
         videoProcessor->setFilename(videoFileName);
-        cv::Mat frame;
-        capture.read(frame);
         QImage image = ImageConverter::Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
@@ -310,6 +348,9 @@ void MainWindow::openVideo()
     }    
 }
 
+/*!
+ * \brief MainWindow::on_actionOpen_Video_triggered
+ */
 void MainWindow::on_actionOpen_Video_triggered()
 {
     if(!isRunning){
@@ -323,6 +364,10 @@ void MainWindow::on_actionOpen_Video_triggered()
     }
 }
 
+/*!
+ * \brief MainWindow::plotResults
+ * \param r
+ */
 void MainWindow::plotResults(std::shared_ptr<Results> r)
 {
     assert(!r->resultMeans.isEmpty());
@@ -473,11 +518,18 @@ void MainWindow::detection()
     isRunning = true;
 }
 
+/*!
+ * \brief MainWindow::on_actionAutodetection_triggered
+ * \param checked
+ */
 void MainWindow::on_actionAutodetection_triggered(bool checked)
 {
     videoProcessor->setAd(checked);
 }
 
+/*!
+ * \brief MainWindow::on_actionAbout_triggered
+ */
 void MainWindow::on_actionAbout_triggered()
 {
     QString cv;
@@ -486,7 +538,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.2\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.2.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!

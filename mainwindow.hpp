@@ -88,6 +88,8 @@ private:
     
     bool isRunning;
     void initPlot(QwtPlot *plot, QwtToolSet& toolset, QString title, QString xlabel, QString ylabel);
+    void writeSettings();
+    void readSettings();
 };
 
 #endif // MAINWINDOW_HPP

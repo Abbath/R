@@ -28,6 +28,7 @@ public:
 
     QImage getImage() { if(image.isNull()) return tmpimage; else return image;}
     QRect getBounds(){ return bounds;}
+    void setBounds(QRect _bounds){ bounds = _bounds; }
  
     int x1(){ return bounds.left(); }
     int x2(){ return bounds.right(); }

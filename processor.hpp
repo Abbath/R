@@ -36,6 +36,8 @@ public:
     void setPeriod(double value);
     void setImageProcessor(ImageProcessor* ip);
     
+    ~VideoProcessor();
+    
 signals:
     void frameChanged(QImage frame);
     void rectChanged(QRect rect);
@@ -57,6 +59,8 @@ private:
     double period;
     QRect autoDetectLight();
     void fixRange(int fps, int frameNumber);
+    void writeSettings();
+    void readSettings();
 };
 
 #endif // PROCESSOR_H

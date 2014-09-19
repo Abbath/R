@@ -15,6 +15,7 @@ VideoProcessor::VideoProcessor(QObject* parent) :
     sensitivity(60), 
     period(1.0)
 {
+    readSettings();
     setAutoDelete(false);
 }
 
@@ -99,7 +100,6 @@ void VideoProcessor::run()
     capture.release();
     
     emit progress(100);
-    
     
     std::shared_ptr< Results > results( new Results );
     results->resultsNumbers = lightPixelsNumbers;
@@ -263,6 +263,30 @@ void VideoProcessor::fixRange(int fps, int frameNumber)
 }
 
 /*!
+ * \brief VideoProcessor::writeSettings
+ */
+void VideoProcessor::writeSettings()
+{
+    QSettings settings("CAD", "R");
+    settings.beginGroup("VP");
+    settings.setValue("period", period);
+    settings.setValue("sensitivity", sensitivity);
+    settings.setValue("ad", ad);
+    settings.endGroup();
+}
+
+/*!
+ * \brief VideoProcessor::readSettings
+ */
+void VideoProcessor::readSettings()
+{
+    QSettings settings("CAD", "R");
+    period = settings.value("VP/period").toDouble();
+    sensitivity = settings.value("VP/sensitivity").toUInt();
+    ad = settings.value("VP/ad").toBool();
+}
+
+/*!
  * \brief Processor::stopThis
  */
 void VideoProcessor::stopThis()
@@ -286,6 +310,11 @@ void VideoProcessor::setPeriod(double value)
 void VideoProcessor::setImageProcessor(ImageProcessor *ip)
 {
     imageProcessor = ip;
+}
+
+VideoProcessor::~VideoProcessor()
+{
+    writeSettings();
 }
 
 /*!

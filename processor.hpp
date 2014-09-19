@@ -10,36 +10,35 @@
 #include <iostream>
 #include <memory>
 #include "results.hpp"
+#include "imageconverter.hpp"
+#include "imageprocessor.hpp"
 
 /*!
  * \brief The Processor class
  */
-class Processor : public QObject, public QRunnable
+class VideoProcessor : public QObject, public QRunnable
 {
     Q_OBJECT
     
     typedef std::vector<cv::Point> Contour;
     typedef std::vector<Contour> Contours;
 public:
-    explicit Processor(QObject* parent = 0);
+    explicit VideoProcessor(QObject* parent = 0);
     void setFilename(QString _filename){ filename = _filename; }
-    void setThreshold(int _threshold){ lightThreshold = _threshold; }
-    void setBounds(QRect _rect){ rect = _rect; }
     void setAd(bool _ad) { ad = _ad; }
     void run();
-    QImage Mat2QImage(const cv::Mat &src);
-    QPair<int, double> processImageCV(QImage _image);
+    QPair<int, double> processImage(QImage _image);
 
     void setStart(double value);
     void setEnd(double value);
     
     void setSensitivity(unsigned int value);
     void setPeriod(double value);
+    void setImageProcessor(ImageProcessor* ip);
     
 signals:
     void frameChanged(QImage frame);
     void rectChanged(QRect rect);
-    void maxMinBounds(QRect rect);
     void detection();
     void progress(int);
     void time(double);
@@ -49,21 +48,15 @@ public slots:
     void stopThis();
 
 private:
+    ImageProcessor* imageProcessor;
     QString filename;
-    QRect rect;
-    unsigned int lightThreshold;
     double start, end;
     volatile bool stop;
     bool ad;
     unsigned int sensitivity;
     double period;
-    cv::Mat QImage2Mat(const QImage &src);
-    double mean(cv::Mat image, Contour contour);
-    QPair<int, double> processImageCVMat(cv::Mat &m);
-    QImage drawOnQImage(QImage image, Contours contours);
     QRect autoDetectLight();
     void fixRange(int fps, int frameNumber);
-    unsigned int qrgbToGray(QRgb rgb);
 };
 
 #endif // PROCESSOR_H

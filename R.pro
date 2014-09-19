@@ -18,13 +18,17 @@ SOURCES += main.cpp\
 #    mainwidget.cpp \
     processor.cpp \
     imagearea.cpp \
-    results.cpp
+    results.cpp \
+    imageconverter.cpp \
+    imageprocessor.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
     processor.hpp \
     imagearea.hpp \
-    results.hpp
+    results.hpp \
+    imageconverter.hpp \
+    imageprocessor.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

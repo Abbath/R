@@ -35,7 +35,9 @@ MainWindow::MainWindow(QWidget* parent)
     initPlot(ui->l_plot, lightsNumbersPlot, QString("Lights"), QString("Time [s]"), QString("Points"));
     initPlot(ui->m_plot, lightsMeansPlot, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
     
-    vp = new Processor;
+    videoProcessor = new VideoProcessor(this);
+    imageProcessor = new ImageProcessor(this);
+    videoProcessor->setImageProcessor(imageProcessor);
     
     ui->imagearea->readConfig("bounds.conf");
     QRect bounds = ui->imagearea->getBounds();
@@ -52,14 +54,14 @@ MainWindow::MainWindow(QWidget* parent)
     qRegisterMetaType<QVector<double> >("QVector<double>");
     qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
     
-    connect(vp, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
-    connect(vp, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
-    connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)));
-    connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect)));
-    connect(this, SIGNAL(stop()), vp, SLOT(stopThis()));
-    connect(vp, SIGNAL(progress(int)), this, SLOT(progress(int)));
-    connect(vp, SIGNAL(time(double)), this, SLOT(time(double)));
-    connect(vp, SIGNAL(detection()), this, SLOT(detection()));
+    connect(videoProcessor, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
+    connect(videoProcessor, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
+    connect(imageProcessor, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)));
+    connect(videoProcessor, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect)));
+    connect(this, SIGNAL(stop()), videoProcessor, SLOT(stopThis()));
+    connect(videoProcessor, SIGNAL(progress(int)), this, SLOT(progress(int)));
+    connect(videoProcessor, SIGNAL(time(double)), this, SLOT(time(double)));
+    connect(videoProcessor, SIGNAL(detection()), this, SLOT(detection()));
     connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
     connect(period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
     this->showMaximized();
@@ -95,7 +97,7 @@ void MainWindow::initPlot(QwtPlot* plot, QwtToolSet &toolset, QString title, QSt
  */
 MainWindow::~MainWindow()
 {
-    vp->stopThis();
+    videoProcessor->stopThis();
     delete ui;
 }
 
@@ -108,14 +110,14 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     if (ui->action3D->isChecked()) {
         //ui->widget_3d->setStep((float)value/255.0);
     } else {
-        vp->setThreshold(value);
+        imageProcessor->setLightThreshold(value);
         if (!imageFileName.isNull()) {
             QImage image(imageFileName);
-            QPair<int, double> id = vp->processImageCV(image);
+            QPair<int, double> id = imageProcessor->processImage(image);
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         } else if(!videoFileName.isNull()){
-            QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
+            QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         }
@@ -135,11 +137,11 @@ void MainWindow::openImage()
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
         ui->spinBox_Y2->setMaximum(image.height());
-        vp->setThreshold(ui->spinBox->value());
-        vp->setBounds(ui->imagearea->getBounds());
+        imageProcessor->setLightThreshold(ui->spinBox->value());
+        imageProcessor->setBounds(ui->imagearea->getBounds());
         ui->imagearea->setEnabled(true);
         ui->imagearea->open(imageFileName);
-        QPair<int, double> id = vp->processImageCV(image);
+        QPair<int, double> id = imageProcessor->processImage(image);
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
     }    
@@ -207,20 +209,20 @@ void MainWindow::setBounds(QRect rect)
         //    ui->widget_3d->setStep((float)ui->spinBox->value()/255.0);
         //    ui->widget_3d->setImage(ui->imagearea->getImage().copy(ui->imagearea->getRect()));
     }
-    vp->setThreshold(ui->spinBox->value());
-    vp->setBounds(rect);
+    imageProcessor->setLightThreshold(ui->spinBox->value());
+    imageProcessor->setBounds(rect);
     
     if (!imageFileName.isNull()) {
         QImage image(imageFileName);
         if(!image.isNull()){
-            QPair<int, double> id = vp->processImageCV(image);
+            QPair<int, double> id = imageProcessor->processImage(image);
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         }else{
             QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");                        
         }
     } else if(!videoFileName.isNull()){
-        QPair<int, double> id = vp->processImageCV(ui->imagearea->getImage());
+        QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
     }
@@ -295,10 +297,10 @@ void MainWindow::openVideo()
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
         period->setMaximum(videoLength);
-        vp->setFilename(videoFileName);
+        videoProcessor->setFilename(videoFileName);
         cv::Mat frame;
         capture.read(frame);
-        QImage image = vp->Mat2QImage(frame);
+        QImage image = ImageConverter::Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
@@ -348,7 +350,7 @@ void MainWindow::plotResults(std::shared_ptr<Results> r)
     lightsNumbersPlot.curve.setData(numbers);
     lightsNumbersPlot.curve.attach(ui->l_plot);
     ui->l_plot->replot();
-        
+    
     QVector<QPointF> pointsMeans(r->resultMeans.size());
     counter = 0;
     auto pointsMIt = pointsMeans.begin();
@@ -373,9 +375,9 @@ void MainWindow::on_actionRun_triggered()
         ui->progressBar->show();
         ui->label_8->show();
         if (!videoFileName.isNull()) {
-            vp->setThreshold(ui->spinBox->value());
-            vp->setBounds(ui->imagearea->getBounds());
-            QThreadPool::globalInstance()->start(vp);
+            imageProcessor->setLightThreshold(ui->spinBox->value());
+            imageProcessor->setBounds(ui->imagearea->getBounds());
+            QThreadPool::globalInstance()->start(videoProcessor);
         }
     }
     
@@ -442,7 +444,7 @@ void MainWindow::time(double value)
  */
 void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)
 {
-    vp->setStart(arg1);
+    videoProcessor->setStart(arg1);
 }
 
 /*!
@@ -451,7 +453,7 @@ void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)
  */
 void MainWindow::on_doubleSpinBox_3_valueChanged(double arg1)
 {
-    vp->setEnd(arg1);
+    videoProcessor->setEnd(arg1);
 }
 
 /*!
@@ -473,7 +475,7 @@ void MainWindow::detection()
 
 void MainWindow::on_actionAutodetection_triggered(bool checked)
 {
-    vp->setAd(checked);
+    videoProcessor->setAd(checked);
 }
 
 void MainWindow::on_actionAbout_triggered()
@@ -493,10 +495,10 @@ void MainWindow::on_actionAbout_triggered()
  */
 void MainWindow::sensChanged(int value)
 {
-    vp->setSensitivity(value);
+    videoProcessor->setSensitivity(value);
 }
 
 void MainWindow::periodChanged(double value)
 {
-    vp->setPeriod(value);
+    videoProcessor->setPeriod(value);
 }

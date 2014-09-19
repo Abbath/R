@@ -7,6 +7,8 @@
 #include <QtWidgets>
 #include "imagearea.hpp"
 #include "processor.hpp"
+#include "imageconverter.hpp"
+#include "imageprocessor.hpp"
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>
@@ -38,7 +40,7 @@ public:
     void openVideo();
     void openImage();
 public slots:
-    void setProcessor(Processor * p) { vp = p; }
+    void setProcessor(VideoProcessor * p) { videoProcessor = p; }
     void setBounds(QRect rect);
 private slots:
     void on_horizontalSlider_valueChanged(int value);
@@ -78,7 +80,8 @@ private:
     QwtToolSet lightsMeansPlot;
     
     Ui::MainWindow *ui;
-    Processor *vp;
+    VideoProcessor *videoProcessor;
+    ImageProcessor *imageProcessor;
 
     QString imageFileName;
     QString videoFileName;

@@ -4,7 +4,6 @@
 #include <QWidget>
 #include <QtCore>
 #include <QtGui>
-#include <QtConcurrent/QtConcurrent>
 #include <QFileDialog>
 
 namespace Ui {
@@ -27,9 +26,6 @@ public:
     void loadImage(QImage _image);
     void readConfig(QString confname);
 
-    QSize getSize(){ return image.size(); }
-    void saveBounds();
-    void saveResults();
     QImage getImage() { if(image.isNull()) return tmpimage; else return image;}
     QRect getBounds(){ return bounds;}
  
@@ -46,15 +42,15 @@ public:
     ~ImageArea();
 
 private:
-    QVector<int> res;
-    QVector<double> resm;
     Ui::ImageArea *ui;
     QImage image, tmpimage;
     bool rectdrawing;
     QRect bounds;
+
 public slots:
     void boundsChanged(QRect _bounds);
     void frameChanged(QImage _image);
+
 signals:
     void rectChanged(QRect r);
     void graph(const QVector<int> &v);

@@ -24,7 +24,7 @@ void Processor::run()
 {
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
-    QVector<double> timestamps;
+    QVector<double> timeStamps;
     
     if(ad){
         rect = autoDetectLight();
@@ -83,7 +83,7 @@ void Processor::run()
         }
         
         double timestamp = absIndex / double(fps);
-        timestamps.push_back(timestamp);
+        timeStamps.push_back(timestamp);
         emit time(timestamp);
         
         QThread::currentThread()->usleep(50);
@@ -92,12 +92,17 @@ void Processor::run()
     
     emit progress(100);
     
-    emit graphL(lightPixelsNumbers, timestamps);
-    emit graphM(lightPixelsMeans, timestamps);
+    
+    std::shared_ptr< Results > results( new Results );
+    results->resultsNumbers = lightPixelsNumbers;
+    results->resultMeans = lightPixelsMeans;
+    results->timeStamps = timeStamps;
+  
+    emit displayResults(results);
 }
 
 /*!
- * \brief Processor::autoDetect
+ * \brief Processor::autoDetectLight
  * \return 
  */
 QRect Processor::autoDetectLight(){
@@ -160,10 +165,12 @@ QRect Processor::autoDetectLight(){
     cv::Mat tmp = dif.clone();
     
     for(auto i = unsigned((start + period) * fps) + 2u; i < unsigned(end * fps); ++i){
-        if (stop) {
+        if(stop){
             break;
         }
+        
         absIndex++;
+        
         if(i % unsigned(period*fps) == 0){
             oldframe = frame.clone();
             

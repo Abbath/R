@@ -12,7 +12,6 @@
 #include <qwt_plot_curve.h>
 #include <qwt_plot_zoomer.h>
 #include <qwt_plot_magnifier.h>
-#include <qwt_plot_panner.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -52,8 +51,7 @@ private slots:
     void on_spinBox_Y2_valueChanged(int arg1);
     void on_actionSetup_triggered(bool checked);
     void on_actionOpen_Video_triggered();
-    void displayResultsL(const QVector<int> &lightPixelsNumbers, const QVector<double> &t);
-    void displayResultsM(const QVector<double> &lightPixelsNumbers, const QVector<double> &t);
+    void plotResults(std::shared_ptr<Results> r);    
     void on_actionRun_triggered();
     void on_actionSave_triggered();
     void on_actionStop_triggered();  

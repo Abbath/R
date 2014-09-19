@@ -183,40 +183,9 @@ void ImageArea::readConfig(QString confname)
 }
 
 /*!
-         * \brief ImageArea::saveBounds
-         */
-void ImageArea::saveBounds()
-{
-    QFile file("bounds.conf");
-    if (file.open(QFile::WriteOnly | QFile::Truncate)) {
-        QTextStream str(&file);
-        str << x1() << "\n" << y1() << "\n" << x2() << "\n" << y2();
-    } else {
-        QMessageBox::warning(this, "Warning!", "Bounds can not be saved.");
-    }
-}
-
-/*!
-         * \brief ImageArea::saveResults
-         */
-void ImageArea::saveResults()
-{
-    QString name = QFileDialog::getSaveFileName(this, "Save data", "", "Data (*.dat)");
-    QFile file(name);
-    if (file.open(QFile::WriteOnly)) {
-        QTextStream str(&file);
-        for (int i = 0; i < res.size(); ++i) {
-            str << i << " " << res[i] << " " << resm[i] << '\n';
-        }
-    } else {
-        QMessageBox::warning(this, "Warning", "Can not open file for writing!");
-    }
-}
-
-/*!
-         * \brief ImageArea::frameChanged
-         * \param _image
-         */
+ * \brief ImageArea::frameChanged
+ * \param _image
+ */
 void ImageArea::frameChanged(QImage _image)
 {
     tmpimage = _image;

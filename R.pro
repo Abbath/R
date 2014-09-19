@@ -17,12 +17,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
 #    mainwidget.cpp \
     processor.cpp \
-    imagearea.cpp
+    imagearea.cpp \
+    results.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
     processor.hpp \
-    imagearea.hpp
+    imagearea.hpp \
+    results.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

@@ -1,5 +1,5 @@
-#ifndef VIDEOPROCESSOR_H
-#define VIDEOPROCESSOR_H
+#ifndef PROCESSOR_H
+#define PROCESSOR_H
 
 #include <QRunnable>
 #include <QMessageBox>
@@ -8,6 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <memory>
+#include "results.hpp"
 
 /*!
  * \brief The Processor class
@@ -41,12 +43,11 @@ signals:
     void detection();
     void progress(int);
     void time(double);
-    void graphL(const QVector<int> &v, const QVector<double>&v0);
-    void graphM(const QVector<double> &v, const QVector<double>&v0);
+    void displayResults(std::shared_ptr<Results> r);
+
 public slots:
     void stopThis();
-private:
-    unsigned int qrgbToGray(QRgb rgb);
+
 private:
     QString filename;
     QRect rect;
@@ -62,6 +63,7 @@ private:
     QImage drawOnQImage(QImage image, Contours contours);
     QRect autoDetectLight();
     void fixRange(int fps, int frameNumber);
+    unsigned int qrgbToGray(QRgb rgb);
 };
 
-#endif // VIDEOPROCESSOR_H
+#endif // PROCESSOR_H

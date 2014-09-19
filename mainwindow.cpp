@@ -50,9 +50,9 @@ MainWindow::MainWindow(QWidget* parent)
     
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
+    qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
     
-    connect(vp, SIGNAL(graphL(QVector<int>, QVector<double>)), this, SLOT(displayResultsL(QVector<int>, QVector<double>)));
-    connect(vp, SIGNAL(graphM(QVector<double>, QVector<double>)), this, SLOT(displayResultsM(QVector<double>, QVector<double>)));
+    connect(vp, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
     connect(vp, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
     connect(vp, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)));
     connect(vp, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect)));
@@ -321,50 +321,44 @@ void MainWindow::on_actionOpen_Video_triggered()
     }
 }
 
-/*!
- * \brief MainWindow::displayResultsL
- * \param res
- */
-void MainWindow::displayResultsL(const QVector<int>& res, const QVector<double>& t)
+void MainWindow::plotResults(std::shared_ptr<Results> r)
 {
-    this->lightPixelsNumbers = res;
+    assert(!r->resultMeans.isEmpty());
+    assert(!r->resultsNumbers.isEmpty());
+    assert(!r->timeStamps.isEmpty());
+    assert(r->resultMeans.size() == r->resultsNumbers.size() && r->resultMeans.size() == r->timeStamps.size());
+    
+    this->lightPixelsNumbers = r->resultsNumbers;
+    this->lightPixelsMeans = r->resultMeans;
+    
     ui->l_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
-    ui->l_plot->replot();
-    
-    QVector<QPointF> points(res.size());
-    quint32 counter = 0;
-    auto pointsIt = points.begin();
-    
-    for (auto ri = res.constBegin(); ri != res.constEnd(); ++ri, ++pointsIt, ++counter) {
-        (*pointsIt) = QPointF(t[counter], (*ri));
-    }
-    
-    QwtPointSeriesData* data = new QwtPointSeriesData(points);
-    lightsNumbersPlot.curve.setData(data);
-    lightsNumbersPlot.curve.attach(ui->l_plot);
-    ui->l_plot->replot();
-}
-
-/*!
- * \brief MainWindow::displayResultsM
- * \param res
- */
-void MainWindow::displayResultsM(const QVector<double>& res, const QVector<double>& t)
-{
-    this->lightPixelsMeans = res;
     ui->m_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
+    ui->l_plot->replot();
     ui->m_plot->replot();
     
-    QVector<QPointF> points(res.size());
+    QVector<QPointF> pointsNumbers(r->resultsNumbers.size());
     quint32 counter = 0;
-    auto pointsIt = points.begin();
+    auto pointsNIt = pointsNumbers.begin();
     
-    for (auto ri = res.constBegin(); ri != res.constEnd(); ++ri, ++pointsIt, ++counter) {
-        (*pointsIt) = QPointF(t[counter], (*ri));
+    for (auto ri = r->resultsNumbers.constBegin(); ri != r->resultsNumbers.constEnd(); ++ri, ++pointsNIt, ++counter) {
+        (*pointsNIt) = QPointF(r->timeStamps[counter], (*ri));
     }
     
-    QwtPointSeriesData* data = new QwtPointSeriesData(points);
-    lightsMeansPlot.curve.setData(data);
+    QwtPointSeriesData* numbers = new QwtPointSeriesData(pointsNumbers);
+    lightsNumbersPlot.curve.setData(numbers);
+    lightsNumbersPlot.curve.attach(ui->l_plot);
+    ui->l_plot->replot();
+        
+    QVector<QPointF> pointsMeans(r->resultMeans.size());
+    counter = 0;
+    auto pointsMIt = pointsMeans.begin();
+    
+    for (auto ri = r->resultMeans.constBegin(); ri != r->resultMeans.constEnd(); ++ri, ++pointsMIt, ++counter) {
+        (*pointsMIt) = QPointF(r->timeStamps[counter], (*ri));
+    }
+    
+    QwtPointSeriesData* means = new QwtPointSeriesData(pointsMeans);
+    lightsMeansPlot.curve.setData(means);
     lightsMeansPlot.curve.attach(ui->m_plot);
     ui->m_plot->replot();
 }

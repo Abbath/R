@@ -8,15 +8,14 @@
  */
 VideoProcessor::VideoProcessor(QObject* parent) : 
     QObject(parent), 
-    start(-1),
-    end(-1), 
+    range(-1, -1),
     stop(false),
-    ad(false), 
-    sensitivity(60), 
-    period(1.0)
+    ad(false)
 {
+    lightDetector = new LightDetector(this);
     readSettings();
     setAutoDelete(false);
+    connect(lightDetector, SIGNAL(progress(int)), this, SIGNAL(progress(int)));
 }
 
 /*!
@@ -29,7 +28,14 @@ void VideoProcessor::run()
     QVector<double> timeStamps;
     
     if(ad){
-        imageProcessor->setBounds(autoDetectLight());
+        emit detection();
+        QRect rect = lightDetector->detectLight(filename, qMakePair(range.first, range.second)); 
+        if(stop){
+            stop = false;
+            return;
+        }
+        imageProcessor->setBounds(rect);
+        emit rectChanged(rect);
     }
     
     cv::VideoCapture capture(filename.toStdString().c_str());
@@ -42,15 +48,15 @@ void VideoProcessor::run()
     int frameNumber = int(capture.get(CV_CAP_PROP_FRAME_COUNT));
     int fps = capture.get(CV_CAP_PROP_FPS); 
     
-    fixRange(fps, frameNumber);
+    lightDetector->fixRange(range, fps, frameNumber);
     
-    if(start >= end && start > std::numeric_limits<double>::epsilon() && end > std::numeric_limits<double>::epsilon() ){
+    if(range.first >= range.second && range.first > std::numeric_limits<double>::epsilon() && range.second > std::numeric_limits<double>::epsilon() ){
         return;
     }
     
     int absIndex = 0;
     
-    for(int i = 0; i < int(start * fps); ++i, ++absIndex){
+    for(int i = 0; i < int(range.first * fps); ++i, ++absIndex){
         if(!capture.grab()){
             QMessageBox::warning(0, "Error", "Grab failed\n");
             return;
@@ -59,7 +65,7 @@ void VideoProcessor::run()
     
     cv::Mat frame;
     
-    for(int i = int(start * fps); i < int(end * fps); i++){
+    for(int i = int(range.first * fps); i < int(range.second * fps); i++){
         if (stop) {
             stop = false;
             break;
@@ -85,10 +91,10 @@ void VideoProcessor::run()
         
         absIndex++;
         
-        int relIndex = absIndex - int(start * fps);
+        int relIndex = absIndex - int(range.first * fps);
         
-        if (!(relIndex % (int((end - start) * fps) / 100))) {
-            emit progress(relIndex / (int((end - start) * fps) / 100));
+        if (!(relIndex % (int((range.second - range.first) * fps) / 100))) {
+            emit progress(relIndex / (int((range.second - range.first) * fps) / 100));
         }
         
         double timestamp = absIndex / double(fps);
@@ -101,165 +107,12 @@ void VideoProcessor::run()
     
     emit progress(100);
     
-    std::shared_ptr< Results > results( new Results );
+    std::shared_ptr<Results> results(new Results);
     results->resultsNumbers = lightPixelsNumbers;
     results->resultMeans = lightPixelsMeans;
     results->timeStamps = timeStamps;
     
     emit displayResults(results);
-}
-
-/*!
- * \brief Processor::autoDetectLight
- * \return 
- */
-QRect VideoProcessor::autoDetectLight(){
-    emit detection();
-    
-    cv::VideoCapture capture(filename.toStdString().c_str());
-    
-    if (!capture.isOpened()) {
-        QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    cv::Mat frame, oldframe, dif;
-    
-    int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-    int fps = capture.get(CV_CAP_PROP_FPS); 
-    
-    fixRange(fps, frameNumber);
-    
-    if(period >= fabs(end - start) && (end - start) * fps >= 10){
-        period = (end - start) / 2;
-    }else if((end - start) * fps < 10){
-        QMessageBox::warning(0, "Error", "Too small range for autodetection\n");        
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    if(start >= end && start > std::numeric_limits<double>::epsilon() && end > std::numeric_limits<double>::epsilon()){
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    unsigned absIndex = 0;
-    
-    for(auto i = 0u; i < unsigned(start * fps); ++i, ++absIndex){
-        if(!capture.grab()){
-            QMessageBox::warning(0, "Error", "Grab failed\n");
-            return QRect(0, 0, 0, 0);;
-        }
-    }
-    
-    if(!capture.read(oldframe)){
-        QMessageBox::warning(0, "Error", "Read failed\n");                
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    for(auto i = 0u; i < unsigned(period*fps); ++i){
-        if(!capture.grab()){
-            QMessageBox::warning(0, "Error", "Grab failed\n");
-            return QRect(0, 0, 0, 0);;
-        }    
-    }
-    
-    if(!capture.read(frame)){
-        QMessageBox::warning(0, "Error", "Read failed\n"); 
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    cv::absdiff(frame, oldframe, dif);
-    cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
-    
-    cv::Mat tmp = dif.clone();
-    
-    for(auto i = unsigned((start + period) * fps) + 2u; i < unsigned(end * fps); ++i){
-        if(stop){
-            break;
-        }
-        
-        absIndex++;
-        
-        if(i % unsigned(period*fps) == 0){
-            oldframe = frame.clone();
-            
-            if(!capture.read(frame)){
-                QMessageBox::warning(0, "Error", "Read failed\n");                
-            }
-            
-            cv::absdiff(frame, oldframe, dif);
-            cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
-            cv::bitwise_or(dif, tmp, tmp);
-            
-            int relIndex = absIndex - int(start * fps);
-            
-            emit progress(relIndex / (fps * (end -start) / 100.0));
-        }else{
-            if(!capture.grab()){
-                QMessageBox::warning(0, "Error", "Grab failed\n"); 
-                return QRect(0, 0, 0, 0);
-            }
-        }
-        QThread::currentThread()->usleep(50);
-    }
-    
-    cv::flip(tmp, tmp, 0);
-    cv::Mat diffMap(tmp.rows, tmp.cols, CV_8UC1);
-    cv::cvtColor(tmp, diffMap, CV_RGB2GRAY);
-    
-    Contours contours;
-    cv::findContours(diffMap, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
-    
-    std::vector<cv::Rect> boundRect(contours.size());
-    int maxx = 0, minx = diffMap.cols, maxy = 0, miny = diffMap.rows; 
-    
-    for(unsigned i = 0; i < contours.size(); ++i){
-        boundRect[i] = boundingRect(contours[i]);
-        if(boundRect[i].x < minx){
-            minx = boundRect[i].x;
-        }
-        if(boundRect[i].y < miny){
-            miny = boundRect[i].y;
-        }
-        if((boundRect[i].x + boundRect[i].width) > maxx){
-            maxx = boundRect[i].x + boundRect[i].width;
-        }
-        if((boundRect[i].y + boundRect[i].height) > maxy){
-            maxy = boundRect[i].y + boundRect[i].height;
-        }
-    }
-    
-    capture.release();
-    
-    QRect result(minx, miny, maxx - minx, maxy - miny);
-    emit rectChanged(result);
-    return result;
-}
-
-/*!
- * \brief Processor::fixRange
- * \param fps
- * \param frameNumber
- */
-void VideoProcessor::fixRange(int fps, int frameNumber)
-{
-    if(start == -1){
-        start = 0;
-    }    
-    if(end == -1){
-        end = frameNumber / double(fps);
-    }
-    if(start * fps > frameNumber){
-        start = frameNumber;
-    }
-    if(end * fps > frameNumber){
-        end = frameNumber;
-    }
-    if(start < 0.0){
-        start = 0.0;
-    }
-    if(end < 0.0){
-        end = 0.0;
-    }    
 }
 
 /*!
@@ -269,8 +122,6 @@ void VideoProcessor::writeSettings()
 {
     QSettings settings("CAD", "R");
     settings.beginGroup("VP");
-    settings.setValue("period", period);
-    settings.setValue("sensitivity", sensitivity);
     settings.setValue("ad", ad);
     settings.endGroup();
 }
@@ -281,8 +132,6 @@ void VideoProcessor::writeSettings()
 void VideoProcessor::readSettings()
 {
     QSettings settings("CAD", "R");
-    period = settings.value("VP/period").toDouble();
-    sensitivity = settings.value("VP/sensitivity").toUInt();
     ad = settings.value("VP/ad").toBool();
 }
 
@@ -292,6 +141,9 @@ void VideoProcessor::readSettings()
 void VideoProcessor::stopThis()
 {
     stop = true;
+    if(ad){
+        lightDetector->stopThis();
+    }
 }
 
 /*!
@@ -300,7 +152,7 @@ void VideoProcessor::stopThis()
  */
 void VideoProcessor::setPeriod(double value)
 {
-    period = value;
+    lightDetector->setPeriod(value);
 }
 
 /*!
@@ -323,7 +175,7 @@ VideoProcessor::~VideoProcessor()
  */
 void VideoProcessor::setSensitivity(unsigned int value)
 {
-    sensitivity = value;
+    lightDetector->setSensitivity(value);
 }
 
 /*!
@@ -332,7 +184,7 @@ void VideoProcessor::setSensitivity(unsigned int value)
  */
 void VideoProcessor::setEnd(double value)
 {
-    end = value;
+    range.second = value;
 }
 
 /*!
@@ -341,5 +193,5 @@ void VideoProcessor::setEnd(double value)
  */
 void VideoProcessor::setStart(double value)
 {
-    start = value;
+    range.first = value;
 }

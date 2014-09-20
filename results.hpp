@@ -3,6 +3,9 @@
 
 #include <QtCore>
 
+/*!
+ * \brief The Results class
+ */
 class Results
 {
 public:

@@ -8,6 +8,9 @@
 #include <QtGui>
 #include "imageconverter.hpp"
 
+/*!
+ * \brief The ImageProcessor class
+ */
 class ImageProcessor : public QObject
 {
     Q_OBJECT

@@ -42,15 +42,12 @@ MainWindow::MainWindow(QWidget* parent)
     readSettings();
 
     QRect bounds = ui->imagearea->getBounds();
-//    ui->spinBox_X1->setMaximum(bounds.left());
-//    ui->spinBox_Y1->setMaximum(bounds.top());
-//    ui->spinBox_X2->setMaximum(bounds.right());
-//    ui->spinBox_Y2->setMaximum(bounds.bottom());
+
     ui->spinBox_X1->setValue(bounds.left());
     ui->spinBox_Y1->setValue(bounds.top());
     ui->spinBox_X2->setValue(bounds.right());
     ui->spinBox_Y2->setValue(bounds.bottom());
-    
+
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
     qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
@@ -65,7 +62,6 @@ MainWindow::MainWindow(QWidget* parent)
     connect(videoProcessor, SIGNAL(detection()), this, SLOT(detection()));
     connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
     connect(period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
-    this->showMaximized();
 }
 
 /*!
@@ -454,6 +450,8 @@ void MainWindow::on_actionSave_triggered()
 void MainWindow::on_actionStop_triggered()
 {
     isRunning = false;
+    ui->progressBar->hide();
+    ui->label_8->hide();
     emit stop();
 }
 
@@ -538,7 +536,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.2.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.3\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!

@@ -9,6 +9,7 @@
 namespace Ui {
 class ImageArea;
 }
+
 /*!
  * \brief The ImageArea class
  */

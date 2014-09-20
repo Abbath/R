@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     imagearea.cpp \
     results.cpp \
     imageconverter.cpp \
-    imageprocessor.cpp
+    imageprocessor.cpp \
+    lightdetector.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
@@ -28,7 +29,8 @@ HEADERS  += mainwindow.hpp \
     imagearea.hpp \
     results.hpp \
     imageconverter.hpp \
-    imageprocessor.hpp
+    imageprocessor.hpp \
+    lightdetector.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

@@ -12,6 +12,7 @@
 #include "results.hpp"
 #include "imageconverter.hpp"
 #include "imageprocessor.hpp"
+#include "lightdetector.hpp"
 
 /*!
  * \brief The Processor class
@@ -51,14 +52,11 @@ public slots:
 
 private:
     ImageProcessor* imageProcessor;
+    LightDetector* lightDetector;
     QString filename;
-    double start, end;
+    QPair<double, double> range;
     volatile bool stop;
     bool ad;
-    unsigned int sensitivity;
-    double period;
-    QRect autoDetectLight();
-    void fixRange(int fps, int frameNumber);
     void writeSettings();
     void readSettings();
 };

@@ -9,6 +9,7 @@
 #include "processor.hpp"
 #include "imageconverter.hpp"
 #include "imageprocessor.hpp"
+#include "capturewrapper.hpp"
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>

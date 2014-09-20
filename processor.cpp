@@ -38,81 +38,81 @@ void VideoProcessor::run()
         emit rectChanged(rect);
     }
     
-    cv::VideoCapture capture(filename.toStdString().c_str());
-    
-    if(!capture.isOpened()){
-        QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
-        return;
-    }
-    
-    int frameNumber = int(capture.get(CV_CAP_PROP_FRAME_COUNT));
-    int fps = capture.get(CV_CAP_PROP_FPS); 
-    
-    lightDetector->fixRange(range, fps, frameNumber);
-    
-    if(range.first >= range.second && range.first > std::numeric_limits<double>::epsilon() && range.second > std::numeric_limits<double>::epsilon() ){
-        return;
-    }
-    
-    int absIndex = 0;
-    
-    for(int i = 0; i < int(range.first * fps); ++i, ++absIndex){
-        if(!capture.grab()){
-            QMessageBox::warning(0, "Error", "Grab failed\n");
+    CaptureWrapper capture(filename);
+    try{
+        capture.isOpened();
+        
+        int frameNumber = int(capture.get(CV_CAP_PROP_FRAME_COUNT));
+        int fps = capture.get(CV_CAP_PROP_FPS); 
+        
+        lightDetector->fixRange(range, fps, frameNumber);
+        
+        if(range.first >= range.second 
+                && range.first > std::numeric_limits<double>::epsilon() 
+                && range.second > std::numeric_limits<double>::epsilon()){
             return;
         }
+        
+        int absIndex = 0;
+        
+        for(int i = 0; i < int(range.first * fps); ++i, ++absIndex){
+            capture.grab();
+        }
+        
+        cv::Mat frame;
+        
+        for(int i = int(range.first * fps); i < int(range.second * fps); i++){
+            if (stop) {
+                stop = false;
+                break;
+            }
+            
+            capture >> frame;
+            
+            cv::Mat grayFrame;
+            cv::cvtColor(frame, grayFrame, CV_BGR2GRAY, 1);
+            cv::flip(grayFrame, grayFrame, 0);
+            
+            QPair<int, double> processingResult;
+            
+            if(imageProcessor){
+                processingResult = imageProcessor->processImage(grayFrame);
+            }else{
+                QMessageBox::warning(0, "Error", "No image processor is set!\nConnect with developer!");
+                processingResult = qMakePair(0, 0.0l);
+            }
+            
+            lightPixelsNumbers.push_back(processingResult.first);
+            lightPixelsMeans.push_back(processingResult.second);
+            
+            absIndex++;
+            
+            int relIndex = absIndex - int(range.first * fps);
+            
+            if (!(relIndex % (int((range.second - range.first) * fps) / 100))) {
+                emit progress(relIndex / (int((range.second - range.first) * fps) / 100));
+            }
+            
+            double timestamp = absIndex / double(fps);
+            timeStamps.push_back(timestamp);
+            emit time(timestamp);
+            
+            QThread::currentThread()->usleep(50);
+        }
+        
     }
-    
-    cv::Mat frame;
-    
-    for(int i = int(range.first * fps); i < int(range.second * fps); i++){
-        if (stop) {
-            stop = false;
-            break;
-        }
-        
-        capture >> frame;
-        
-        cv::Mat grayFrame;
-        cv::cvtColor(frame, grayFrame, CV_BGR2GRAY, 1);
-        cv::flip(grayFrame, grayFrame, 0);
-        
-        QPair<int, double> processingResult;
-        
-        if(imageProcessor){
-            processingResult = imageProcessor->processImage(grayFrame);
-        }else{
-            QMessageBox::warning(0, "Error", "No image processor is set!\nConnect with developer!");
-            processingResult = qMakePair(0, 0.0l);
-        }
-        
-        lightPixelsNumbers.push_back(processingResult.first);
-        lightPixelsMeans.push_back(processingResult.second);
-        
-        absIndex++;
-        
-        int relIndex = absIndex - int(range.first * fps);
-        
-        if (!(relIndex % (int((range.second - range.first) * fps) / 100))) {
-            emit progress(relIndex / (int((range.second - range.first) * fps) / 100));
-        }
-        
-        double timestamp = absIndex / double(fps);
-        timeStamps.push_back(timestamp);
-        emit time(timestamp);
-        
-        QThread::currentThread()->usleep(50);
+    catch(CaptureError e){
+        QMessageBox::warning(0, "Error", e.getMessage());
+        return;
     }
-    capture.release();
-    
-    emit progress(100);
-    
+
     std::shared_ptr<Results> results(new Results);
     results->resultsNumbers = lightPixelsNumbers;
     results->resultMeans = lightPixelsMeans;
     results->timeStamps = timeStamps;
     
     emit displayResults(results);
+    emit progress(100);
 }
 
 /*!

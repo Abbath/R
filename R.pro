@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     results.cpp \
     imageconverter.cpp \
     imageprocessor.cpp \
-    lightdetector.cpp
+    lightdetector.cpp \
+    capturewrapper.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
@@ -30,7 +31,8 @@ HEADERS  += mainwindow.hpp \
     results.hpp \
     imageconverter.hpp \
     imageprocessor.hpp \
-    lightdetector.hpp
+    lightdetector.hpp \
+    capturewrapper.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

@@ -23,91 +23,78 @@ LightDetector::LightDetector(QObject *parent) :
  */
 QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
 {
-    cv::VideoCapture capture(filename.toStdString().c_str());
-    
-    if (!capture.isOpened()) {
-        QMessageBox::warning(0, "Error", "Capture failed (file not found?)\n");
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    cv::Mat frame, oldframe, dif;
-    
-    int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-    int fps = capture.get(CV_CAP_PROP_FPS); 
-    
-    fixRange(range, fps, frameNumber);
-    
-    if(period >= fabs(range.second - range.first) && (range.second - range.first) * fps >= 10){
-        period = (range.second - range.first) / 2;
-    }else if((range.second - range.first) * fps < 10){
-        QMessageBox::warning(0, "Error", "Too small range for autodetection\n");        
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    if(range.first >= range.second && range.first > std::numeric_limits<double>::epsilon() && range.second > std::numeric_limits<double>::epsilon()){
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    unsigned absIndex = 0;
-    
-    for(auto i = 0u; i < unsigned(range.first * fps); ++i, ++absIndex){
-        if(!capture.grab()){
-            QMessageBox::warning(0, "Error", "Grab failed\n");
+    stop = false;
+    CaptureWrapper capture(filename);
+    cv::Mat tmp;
+    try{
+        capture.isOpened();
+        
+        cv::Mat frame, oldframe, dif;
+        
+        int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
+        int fps = capture.get(CV_CAP_PROP_FPS); 
+        
+        fixRange(range, fps, frameNumber);
+        
+        if(period >= fabs(range.second - range.first) && (range.second - range.first) * fps >= 10){
+            period = (range.second - range.first) / 2;
+        }else if((range.second - range.first) * fps < 10){
+            QMessageBox::warning(0, "Error", "Too small range for autodetection\n");        
             return QRect(0, 0, 0, 0);;
         }
-    }
-    
-    if(!capture.read(oldframe)){
-        QMessageBox::warning(0, "Error", "Read failed\n");                
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    for(auto i = 0u; i < unsigned(period*fps); ++i){
-        if(!capture.grab()){
-            QMessageBox::warning(0, "Error", "Grab failed\n");
+        
+        if(range.first >= range.second && range.first > std::numeric_limits<double>::epsilon() && range.second > std::numeric_limits<double>::epsilon()){
             return QRect(0, 0, 0, 0);;
-        }    
-    }
-    
-    if(!capture.read(frame)){
-        QMessageBox::warning(0, "Error", "Read failed\n"); 
-        return QRect(0, 0, 0, 0);;
-    }
-    
-    cv::absdiff(frame, oldframe, dif);
-    cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
-    
-    cv::Mat tmp = dif.clone();
-    
-    for(auto i = unsigned((range.first + period) * fps) + 2u; i < unsigned(range.second * fps); ++i){
-        if(stop){
-            stop = false;
-            break;
         }
         
-        absIndex++;
+        unsigned absIndex = 0;
         
-        if(i % unsigned(period*fps) == 0){
-            oldframe = frame.clone();
-            
-            if(!capture.read(frame)){
-                QMessageBox::warning(0, "Error", "Read failed\n");                
-            }
-            
-            cv::absdiff(frame, oldframe, dif);
-            cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
-            cv::bitwise_or(dif, tmp, tmp);
-            
-            int relIndex = absIndex - int(range.first * fps);
-            
-            emit progress(relIndex / (fps * (range.second -range.first) / 100.0));
-        }else{
-            if(!capture.grab()){
-                QMessageBox::warning(0, "Error", "Grab failed\n"); 
+        for(auto i = 0u; i < unsigned(range.first * fps); ++i, ++absIndex){
+            capture.grab();
+        }
+        
+        capture.read(oldframe);
+        
+        for(auto i = 0u; i < unsigned(period*fps); ++i){
+            capture.grab();
+        }
+        
+        capture.read(frame);
+        
+        cv::absdiff(frame, oldframe, dif);
+        cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
+        
+        tmp = dif.clone();
+        
+        for(auto i = unsigned((range.first + period) * fps) + 2u; i < unsigned(range.second * fps); ++i){
+            if(stop){
+                stop = false;
                 return QRect(0, 0, 0, 0);
             }
+            
+            absIndex++;
+            
+            if(i % unsigned(period*fps) == 0){
+                oldframe = frame.clone();
+                
+                capture.read(frame);
+                
+                cv::absdiff(frame, oldframe, dif);
+                cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
+                cv::bitwise_or(dif, tmp, tmp);
+                
+                int relIndex = absIndex - int(range.first * fps);
+                
+                emit progress(relIndex / (fps * (range.second -range.first) / 100.0));
+            }else{
+                capture.grab();
+            }
+            QThread::currentThread()->usleep(50);
         }
-        QThread::currentThread()->usleep(50);
+    }
+    catch(CaptureError e){
+        QMessageBox::warning(0, "Error", e.getMessage());
+        return QRect(0, 0, 0, 0);
     }
     
     cv::flip(tmp, tmp, 0);
@@ -135,9 +122,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
             maxy = boundRect[i].y + boundRect[i].height;
         }
     }
-    
-    capture.release();
-    
+        
     QRect result(minx, miny, maxx - minx, maxy - miny);
     return result;
 }

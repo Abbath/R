@@ -318,18 +318,14 @@ void MainWindow::on_actionSetup_triggered(bool checked)
  */
 void MainWindow::openVideo()
 {
-    cv::VideoCapture capture(videoFileName.toStdString().c_str());
-    if (!capture.isOpened()) {
-        QMessageBox::warning(0, "Error", "Capture From AVI failed (file not found?)\n");
-    } else {
+    CaptureWrapper capture(videoFileName);
+    try{
+        capture.isOpened();
         auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
         auto fps = capture.get(CV_CAP_PROP_FPS);
         auto videoLength = frameNumber / double(fps);
         cv::Mat frame;
-        if(!capture.read(frame)){
-            QMessageBox::warning(this, "Error", "Can not read from video file!");
-            return;
-        }
+        capture.read(frame);
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
         period->setMaximum(videoLength);
@@ -341,7 +337,9 @@ void MainWindow::openVideo()
         ui->spinBox_Y2->setMaximum(image.height());
         ui->imagearea->setEnabled(true);
         ui->imagearea->loadImage(image.mirrored(false, true));
-    }    
+    }catch(CaptureError e){
+        QMessageBox::warning(this, "Error", e.getMessage());
+    }
 }
 
 /*!

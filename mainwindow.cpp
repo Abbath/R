@@ -425,7 +425,7 @@ void MainWindow::on_actionSave_triggered()
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
         for (int i = 0; i < lightPixelsNumbers.size(); ++i) {
-            str << i << " " << i/double(frameCount)/fps << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
+            str << i << " " << i/double(frameCount)/fps << " " << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
         }
     } else {
         QMessageBox::warning(this, "Warning!", "Can not open file for writing!");

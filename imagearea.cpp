@@ -155,7 +155,6 @@ void ImageArea::mouseMoveEvent(QMouseEvent* e)
  */
 void ImageArea::frameChanged(QImage image, Contours _contours)
 {
-    qDebug() << "I'm in ImageArea::frameChanged";
     ImageStorage::getInstance().setImage(image);
     contours = _contours;
     rectnotdrawing = true;

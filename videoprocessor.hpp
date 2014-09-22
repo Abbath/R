@@ -14,6 +14,7 @@
 #include "imageprocessor.hpp"
 #include "lightdetector.hpp"
 #include "capturewrapper.hpp"
+#include "imagestorage.hpp"
 
 /*!
  * \brief The Processor class

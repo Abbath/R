@@ -26,7 +26,7 @@ public:
     void setBounds(QRect _bounds);
     
 signals:
-    void frameChanged(QImage frame);
+    void frameChanged(QImage image, Contours contours);
     
 public slots:
     

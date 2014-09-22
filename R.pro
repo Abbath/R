@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     imageprocessor.cpp \
     lightdetector.cpp \
     capturewrapper.cpp \
-    videoprocessor.cpp
+    videoprocessor.cpp \
+    imagestorage.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
@@ -32,7 +33,8 @@ HEADERS  += mainwindow.hpp \
     imageprocessor.hpp \
     lightdetector.hpp \
     capturewrapper.hpp \
-    videoprocessor.hpp
+    videoprocessor.hpp \
+    imagestorage.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

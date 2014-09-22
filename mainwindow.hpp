@@ -10,6 +10,7 @@
 #include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "capturewrapper.hpp"
+#include "imagestorage.hpp"
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>
@@ -28,6 +29,9 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+    
+    typedef std::vector<cv::Point> Contour;
+    typedef std::vector<Contour> Contours;
     
     struct QwtToolSet {
         QwtPlotMagnifier *mag;
@@ -76,6 +80,8 @@ private:
     QDoubleSpinBox* period;
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
+    unsigned frameCount;
+    unsigned fps;
     
     QwtToolSet lightsNumbersPlot;
     QwtToolSet lightsMeansPlot;

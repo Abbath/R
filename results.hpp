@@ -13,6 +13,8 @@ public:
     QVector<int> resultsNumbers;
     QVector<double> resultMeans;
     QVector<double> timeStamps;
+    unsigned frameCount;
+    unsigned fps;
 };
 
 #endif // RESULTS_HPP

@@ -51,10 +51,11 @@ MainWindow::MainWindow(QWidget* parent)
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
     qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
+    qRegisterMetaType<Contours>("Contours");
     
     connect(videoProcessor, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
     connect(videoProcessor, SIGNAL(rectChanged(QRect)), this, SLOT(setBounds(QRect)));
-    connect(imageProcessor, SIGNAL(frameChanged(QImage)), ui->imagearea, SLOT(frameChanged(QImage)));
+    connect(imageProcessor, SIGNAL(frameChanged(QImage, Contours)), ui->imagearea, SLOT(frameChanged(QImage, Contours)));
     connect(videoProcessor, SIGNAL(rectChanged(QRect)), ui->imagearea, SLOT(boundsChanged(QRect)));
     connect(this, SIGNAL(stop()), videoProcessor, SLOT(stopThis()));
     connect(videoProcessor, SIGNAL(progress(int)), this, SLOT(progress(int)));
@@ -139,15 +140,10 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
             //ui->widget_3d->setStep((float)value/255.0);
         } else {
             imageProcessor->setLightThreshold(value);
-            if (!imageFileName.isNull()) {
-                QImage image(imageFileName);
-                QPair<int, double> id = imageProcessor->processImage(image);
-                ui->label_light->setNum(id.first);
-                ui->label_mean->setNum(id.second);
-            } else if(!videoFileName.isNull()){
-                QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
-                ui->label_light->setNum(id.first);
-                ui->label_mean->setNum(id.second);
+            if(!imageFileName.isNull() && !videoFileName.isNull()){
+                 QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
+                 ui->label_light->setNum(id.first);
+                 ui->label_mean->setNum(id.second);
             }
         }
     }
@@ -158,19 +154,19 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
  */
 void MainWindow::openImage()
 {
-    QImage image(imageFileName);
-    if(image.isNull()){
+    ImageStorage::getInstance().loadImage(imageFileName);
+    if(ImageStorage::getInstance().getImage().isNull()){
         QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");            
     }else{
-        ui->spinBox_X1->setMaximum(image.width());
-        ui->spinBox_Y1->setMaximum(image.height());
-        ui->spinBox_X2->setMaximum(image.width());
-        ui->spinBox_Y2->setMaximum(image.height());
+        ui->spinBox_X1->setMaximum(ImageStorage::getInstance().getImageWidth());
+        ui->spinBox_Y1->setMaximum(ImageStorage::getInstance().getImageHeight());
+        ui->spinBox_X2->setMaximum(ImageStorage::getInstance().getImageWidth());
+        ui->spinBox_Y2->setMaximum(ImageStorage::getInstance().getImageHeight());
         imageProcessor->setLightThreshold(ui->spinBox->value());
         imageProcessor->setBounds(ui->imagearea->getBounds());
         ui->imagearea->setEnabled(true);
-        //ui->imagearea->open(imageFileName);
-        QPair<int, double> id = imageProcessor->processImage(image);
+        ui->imagearea->clearContours();
+        QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
     }    
@@ -241,18 +237,8 @@ void MainWindow::setBounds(QRect rect)
         }
         imageProcessor->setLightThreshold(ui->spinBox->value());
         imageProcessor->setBounds(rect);
-        
-        if (!imageFileName.isNull()) {
-            QImage image(imageFileName);
-            if(!image.isNull()){
-                QPair<int, double> id = imageProcessor->processImage(image);
-                ui->label_light->setNum(id.first);
-                ui->label_mean->setNum(id.second);
-            }else{
-                QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");                        
-            }
-        } else if(!videoFileName.isNull()){
-            QPair<int, double> id = imageProcessor->processImage(ui->imagearea->getImage());
+        if(!ImageStorage::getInstance().isImageNull()){
+            QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         }
@@ -336,7 +322,9 @@ void MainWindow::openVideo()
         ui->spinBox_X2->setMaximum(image.width());
         ui->spinBox_Y2->setMaximum(image.height());
         ui->imagearea->setEnabled(true);
-        ui->imagearea->loadImage(image.mirrored(false, true));
+        ui->imagearea->clearContours();
+        ImageStorage::getInstance().setImage(image.mirrored(false, true));
+        ui->imagearea->update();
     }catch(CaptureError e){
         QMessageBox::warning(this, "Error", e.getMessage());
     }
@@ -371,6 +359,8 @@ void MainWindow::plotResults(std::shared_ptr<Results> r)
     
     this->lightPixelsNumbers = r->resultsNumbers;
     this->lightPixelsMeans = r->resultMeans;
+    this->frameCount = r->frameCount;
+    this->fps = r->fps;
     
     ui->l_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
     ui->m_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
@@ -435,7 +425,7 @@ void MainWindow::on_actionSave_triggered()
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
         for (int i = 0; i < lightPixelsNumbers.size(); ++i) {
-            str << i << " " << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
+            str << i << " " << i/double(frameCount)/fps << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
         }
     } else {
         QMessageBox::warning(this, "Warning!", "Can not open file for writing!");

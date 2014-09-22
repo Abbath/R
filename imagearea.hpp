@@ -5,6 +5,10 @@
 #include <QtCore>
 #include <QtGui>
 #include <QFileDialog>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/core.hpp>
+#include "imagestorage.hpp"
 
 namespace Ui {
 class ImageArea;
@@ -16,20 +20,19 @@ class ImageArea;
 class ImageArea : public QWidget
 {
     Q_OBJECT
-
+    typedef std::vector<cv::Point> Contour;
+    typedef std::vector<Contour> Contours;
 public:
     explicit ImageArea(QWidget *parent = 0);
     void paintEvent(QPaintEvent *e);
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
-    void open(QString filename);
-    void loadImage(QImage _image);
     void readConfig(QString confname);
 
-    QImage getImage() { if(image.isNull()) return tmpimage; else return image;}
     QRect getBounds(){ return bounds;}
     void setBounds(QRect _bounds){ bounds = _bounds; }
+    void clearContours(){ contours.clear(); }
  
     int x1(){ return bounds.left(); }
     int x2(){ return bounds.right(); }
@@ -45,13 +48,13 @@ public:
 
 private:
     Ui::ImageArea *ui;
-    QImage image, tmpimage;
-    bool rectdrawing;
+    Contours contours;
+    bool rectnotdrawing;
     QRect bounds;
 
 public slots:
     void boundsChanged(QRect _bounds);
-    void frameChanged(QImage _image);
+    void frameChanged(QImage image, Contours _contours);
 
 signals:
     void rectChanged(QRect r);

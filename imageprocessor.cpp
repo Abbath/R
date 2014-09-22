@@ -55,13 +55,17 @@ QPair<int, double> ImageProcessor::processImage(cv::Mat &m)
         lightMean += localLightArea * mean(matCopy, c);
     }
     
-    lightMean /= lightArea;
+    if(lightArea != 0){
+        lightMean /= lightArea;
+    }else{
+        lightMean = 0;
+    }
     
     if(lightMean < lightThreshold){
         lightMean = lightThreshold;
     }
     
-    emit frameChanged(drawOnQImage(ImageConverter::Mat2QImage(matCopy), contours));
+    emit frameChanged(ImageConverter::Mat2QImage(matCopy), contours);
     
     QPair<int, double> result(lightArea, lightMean);
     

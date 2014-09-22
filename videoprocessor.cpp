@@ -100,19 +100,21 @@ void VideoProcessor::run()
             QThread::currentThread()->usleep(50);
         }
         
+        
+        std::shared_ptr<Results> results(new Results);
+        results->resultsNumbers = lightPixelsNumbers;
+        results->resultMeans = lightPixelsMeans;
+        results->timeStamps = timeStamps;
+        results->frameCount = frameNumber;
+        results->fps = fps;
+    
+    emit displayResults(results);
+    emit progress(100);
     }
     catch(CaptureError e){
         QMessageBox::warning(0, "Error", e.getMessage());
         return;
     }
-
-    std::shared_ptr<Results> results(new Results);
-    results->resultsNumbers = lightPixelsNumbers;
-    results->resultMeans = lightPixelsMeans;
-    results->timeStamps = timeStamps;
-    
-    emit displayResults(results);
-    emit progress(100);
 }
 
 /*!

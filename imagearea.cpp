@@ -10,12 +10,12 @@
 ImageArea::ImageArea(QWidget* parent)
     : QWidget(parent)
     , ui(new Ui::ImageArea)
-    , rectdrawing(true)
+    , rectnotdrawing(true)
 {
     setX1(0);
-    setX2(image.width() - 1);
+    setX2(ImageStorage::getInstance().getImageWidth() - 1);
     setY1(0);
-    setX2(image.height() - 1);
+    setX2(ImageStorage::getInstance().getImageHeight() - 1);
     ui->setupUi(this);
     update();
 }
@@ -46,15 +46,24 @@ void ImageArea::paintEvent(QPaintEvent* e)
 {
     QPainter painter(this);
     painter.setPen(Qt::green);
-  
-    if (!rectdrawing) {
-        if(!image.isNull()){
-            painter.drawImage(0, 0, image);
+    if(!ImageStorage::getInstance().isImageNull()){
+        if (!rectnotdrawing) {
+            painter.drawImage(0, 0, ImageStorage::getInstance().getImage());
             painter.drawRect(bounds);
-        }
-    } else {
-        if(!tmpimage.isNull()){
-            painter.drawImage(0, 0, tmpimage);
+        } else {
+            painter.drawImage(0, 0, ImageStorage::getInstance().getImage());
+            
+            painter.setPen(Qt::green);
+            
+            for(auto contourIt = contours.begin(); contourIt != contours.end(); ++contourIt){
+                for(auto pointIt = contourIt->begin(); pointIt != (contourIt->end() - 1); ++pointIt){
+                    painter.drawLine(pointIt->x, pointIt->y, (pointIt + 1)->x, (pointIt + 1)->y);
+                }
+                painter.drawLine((contourIt->end() - 1)->x,
+                                 (contourIt->end() - 1)->y,
+                                 (contourIt->begin())->x,
+                                 (contourIt->begin())->y);
+            }
             
             painter.setPen(Qt::red);
             
@@ -71,7 +80,6 @@ void ImageArea::paintEvent(QPaintEvent* e)
             painter.drawLine(x1(), y2() - 4, x1(), y2() + 4);
         }
     }
-    
     e->accept();
 }
 
@@ -82,17 +90,17 @@ void ImageArea::paintEvent(QPaintEvent* e)
 void ImageArea::mousePressEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
-        rectdrawing = false;
+        rectnotdrawing = false;
         setX1(e->x());
         setY1(e->y());
         if (e->x() < 0)
             setX1(0);
         if (e->y() < 0)
             setY1(0);
-        if (e->x() >= image.width())
-            setX1(image.width() - 1);
-        if (e->y() >= image.height())
-            setY1(image.height() - 1);
+        if (e->x() >= ImageStorage::getInstance().getImageWidth())
+            setX1(ImageStorage::getInstance().getImageWidth() - 1);
+        if (e->y() >= ImageStorage::getInstance().getImageHeight())
+            setY1(ImageStorage::getInstance().getImageHeight() - 1);
     }
 }
 
@@ -109,11 +117,11 @@ void ImageArea::mouseReleaseEvent(QMouseEvent* e)
             setX2(0);
         if (e->y() < 0)
             setY2(0);
-        if (e->x() >= image.width())
-            setX2(image.width() - 1);
-        if (e->y() >= image.height())
-            setY2(image.height() - 1);
-        rectdrawing = true;
+        if (e->x() >= ImageStorage::getInstance().getImageWidth())
+            setX2(ImageStorage::getInstance().getImageWidth() - 1);
+        if (e->y() >= ImageStorage::getInstance().getImageHeight())
+            setY2(ImageStorage::getInstance().getImageHeight() - 1);
+        rectnotdrawing = true;
         emit rectChanged(bounds);
         update();
     }
@@ -132,55 +140,12 @@ void ImageArea::mouseMoveEvent(QMouseEvent* e)
             setX2(0);
         if (e->y() < 0)
             setY2(0);
-        if (e->x() > image.width())
-            setX2(image.width());
-        if (e->y() > image.height())
-            setY2(image.height());
+        if (e->x() > ImageStorage::getInstance().getImageWidth())
+            setX2(ImageStorage::getInstance().getImageWidth());
+        if (e->y() > ImageStorage::getInstance().getImageHeight())
+            setY2(ImageStorage::getInstance().getImageHeight());
         update();
     } else {
-    }
-}
-
-/*!
- * \brief ImageArea::open
- * \param filename
- */
-void ImageArea::open(QString filename)
-{
-    image.load(filename);
-    tmpimage = image;
-    update();
-}
-
-/*!
- * \brief ImageArea::loadImage
- * \param _image
- */
-void ImageArea::loadImage(QImage _image)
-{
-    image = _image;
-    tmpimage = _image;
-    update();
-}
-
-/*!
- * \brief ImageArea::readConfig
- * \param confname
- */
-void ImageArea::readConfig(QString confname)
-{
-    QFile file(confname);
-    if (file.open(QFile::ReadOnly)) {
-        QTextStream str(&file);
-        int x1;
-        int y1;
-        int x2;
-        int y2;
-        str >> x1 >> y1 >> x2 >> y2;
-        setX1(x1);
-        setY1(y1);
-        setX2(x2);
-        setY2(y2);
     }
 }
 
@@ -188,10 +153,11 @@ void ImageArea::readConfig(QString confname)
  * \brief ImageArea::frameChanged
  * \param _image
  */
-void ImageArea::frameChanged(QImage _image)
+void ImageArea::frameChanged(QImage image, Contours _contours)
 {
     qDebug() << "I'm in ImageArea::frameChanged";
-    tmpimage = _image;
-    rectdrawing = true;
-    repaint();
+    ImageStorage::getInstance().setImage(image);
+    contours = _contours;
+    rectnotdrawing = true;
+    update();
 }

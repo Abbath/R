@@ -12,7 +12,7 @@
 class ImageConverter
 {
 public:
-    static cv::Mat QImage2Mat(const QImage &src);
+    static cv::Mat QImage2Mat(QImage &src);
     static QImage Mat2QImage(const cv::Mat &src);
     ImageConverter();
 };

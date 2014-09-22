@@ -169,7 +169,7 @@ void MainWindow::openImage()
         imageProcessor->setLightThreshold(ui->spinBox->value());
         imageProcessor->setBounds(ui->imagearea->getBounds());
         ui->imagearea->setEnabled(true);
-        ui->imagearea->open(imageFileName);
+        //ui->imagearea->open(imageFileName);
         QPair<int, double> id = imageProcessor->processImage(image);
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
@@ -534,7 +534,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.3\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.3.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!

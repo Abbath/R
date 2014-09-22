@@ -15,6 +15,10 @@ cv::Mat ImageConverter::QImage2Mat(const QImage &src)
     }else if(src.format() == QImage::Format_RGB32){
         cv::Mat tmp1(src.height(), src.width(), CV_8UC4, (uchar*)src.bits(), src.bytesPerLine());
         tmp1.copyTo(tmp);
+    }else {
+        auto src1 = src.convertToFormat(QImage::Format_RGB888);
+        cv::Mat tmp1(src1.height(), src1.width(), CV_8UC3, (uchar*)src1.bits(), src1.bytesPerLine());
+        tmp1.copyTo(tmp);
     }
     
     cv::Mat result(src.height(), src.width(), CV_8UC1);

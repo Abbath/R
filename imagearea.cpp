@@ -46,30 +46,32 @@ void ImageArea::paintEvent(QPaintEvent* e)
 {
     QPainter painter(this);
     painter.setPen(Qt::green);
-    if (!image.isNull()) {
-        if (!rectdrawing) {
+  
+    if (!rectdrawing) {
+        if(!image.isNull()){
             painter.drawImage(0, 0, image);
             painter.drawRect(bounds);
-            return;
-        } else {
-
+        }
+    } else {
+        if(!tmpimage.isNull()){
             painter.drawImage(0, 0, tmpimage);
-
+            
             painter.setPen(Qt::red);
-
+            
             painter.drawLine(x1() - 4, y1(), x1() + 4, y1());
             painter.drawLine(x1(), y1() - 4, x1(), y1() + 4);
-
+            
             painter.drawLine(x2() - 4, y2(), x2() + 4, y2());
             painter.drawLine(x2(), y2() - 4, x2(), y2() + 4);
-
+            
             painter.drawLine(x2() - 4, y1(), x2() + 4, y1());
             painter.drawLine(x2(), y1() - 4, x2(), y1() + 4);
-
+            
             painter.drawLine(x1() - 4, y2(), x1() + 4, y2());
             painter.drawLine(x1(), y2() - 4, x1(), y2() + 4);
         }
     }
+    
     e->accept();
 }
 
@@ -188,7 +190,8 @@ void ImageArea::readConfig(QString confname)
  */
 void ImageArea::frameChanged(QImage _image)
 {
+    qDebug() << "I'm in ImageArea::frameChanged";
     tmpimage = _image;
     rectdrawing = true;
-    update();
+    repaint();
 }

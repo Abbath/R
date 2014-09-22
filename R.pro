@@ -16,23 +16,23 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
 #    mainwidget.cpp \
-    processor.cpp \
     imagearea.cpp \
     results.cpp \
     imageconverter.cpp \
     imageprocessor.cpp \
     lightdetector.cpp \
-    capturewrapper.cpp
+    capturewrapper.cpp \
+    videoprocessor.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
-    processor.hpp \
     imagearea.hpp \
     results.hpp \
     imageconverter.hpp \
     imageprocessor.hpp \
     lightdetector.hpp \
-    capturewrapper.hpp
+    capturewrapper.hpp \
+    videoprocessor.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui

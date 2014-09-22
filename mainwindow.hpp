@@ -6,7 +6,7 @@
 #include <QtGui>
 #include <QtWidgets>
 #include "imagearea.hpp"
-#include "processor.hpp"
+#include "videoprocessor.hpp"
 #include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "capturewrapper.hpp"

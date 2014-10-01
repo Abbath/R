@@ -6,12 +6,13 @@
  */
 CaptureWrapper::CaptureWrapper(QString filename) : capture(filename.toStdString().c_str())
 {
+    assert(!filename.isEmpty());
 }
 
 /*!
  * \brief CaptureWrapper::isOpened
  */
-void CaptureWrapper::isOpened()
+void CaptureWrapper::isOpened() const
 {
     if(!capture.isOpened()){
         throw CaptureError("Can't open video!");

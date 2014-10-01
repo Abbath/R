@@ -10,7 +10,7 @@ VideoProcessor::VideoProcessor(QObject* parent) :
     QObject(parent), 
     range(-1, -1),
     stop(false),
-    ad(false)
+    autodetection(false)
 {
     lightDetector = new LightDetector(this);
     readSettings();
@@ -27,7 +27,7 @@ void VideoProcessor::run()
     QVector<double> lightPixelsMeans;
     QVector<double> timeStamps;
     
-    if(ad){
+    if(autodetection){
         emit detection();
         QRect rect = lightDetector->detectLight(filename, qMakePair(range.first, range.second)); 
         if(stop){
@@ -76,9 +76,9 @@ void VideoProcessor::run()
             QPair<int, double> processingResult;
             
             if(imageProcessor){
-                processingResult = imageProcessor->processImage(grayFrame);
+                processingResult = imageProcessor->process(grayFrame);
             }else{
-                QMessageBox::warning(0, "Error", "No image processor is set!\nConnect with developer!");
+                QMessageBox::critical(0, "Error", "No image processor is set!\nContact with developer!");
                 processingResult = qMakePair(0, 0.0l);
             }
             
@@ -89,8 +89,9 @@ void VideoProcessor::run()
             
             int relIndex = absIndex - int(range.first * fps);
             
-            if (!(relIndex % (int((range.second - range.first) * fps) / 100))) {
-                emit progress(relIndex / (int((range.second - range.first) * fps) / 100));
+            const int hundreds = int((range.second - range.first) * fps) / 100;
+            if (!(relIndex % (hundreds))) {
+                emit progress(relIndex / (hundreds));
             }
             
             double timestamp = absIndex / double(fps);
@@ -105,14 +106,13 @@ void VideoProcessor::run()
         results->resultsNumbers = lightPixelsNumbers;
         results->resultMeans = lightPixelsMeans;
         results->timeStamps = timeStamps;
-        results->frameCount = frameNumber;
-        results->fps = fps;
+
     
-    emit displayResults(results);
-    emit progress(100);
+        emit displayResults(results);
+        emit progress(100);
     }
     catch(CaptureError e){
-        QMessageBox::warning(0, "Error", e.getMessage());
+        QMessageBox::critical(0, "Error", e.getMessage());
         return;
     }
 }
@@ -124,7 +124,7 @@ void VideoProcessor::writeSettings()
 {
     QSettings settings("CAD", "R");
     settings.beginGroup("VP");
-    settings.setValue("ad", ad);
+    settings.setValue("ad", autodetection);
     settings.endGroup();
 }
 
@@ -134,7 +134,7 @@ void VideoProcessor::writeSettings()
 void VideoProcessor::readSettings()
 {
     QSettings settings("CAD", "R");
-    ad = settings.value("VP/ad").toBool();
+    autodetection = settings.value("VP/ad").toBool();
 }
 
 /*!
@@ -143,7 +143,7 @@ void VideoProcessor::readSettings()
 void VideoProcessor::stopThis()
 {
     stop = true;
-    if(ad){
+    if(autodetection){
         lightDetector->stopThis();
     }
 }

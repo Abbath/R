@@ -34,6 +34,7 @@ ImageArea::~ImageArea()
  */
 void ImageArea::boundsChanged(QRect _bounds)
 {
+    assert(_bounds.isValid());
     bounds = _bounds;
     update();
 }
@@ -55,14 +56,14 @@ void ImageArea::paintEvent(QPaintEvent* e)
             
             painter.setPen(Qt::green);
             
-            for(auto contourIt = contours.begin(); contourIt != contours.end(); ++contourIt){
-                for(auto pointIt = contourIt->begin(); pointIt != (contourIt->end() - 1); ++pointIt){
+            for(auto contourIt = contours.cbegin(); contourIt != contours.cend(); ++contourIt){
+                for(auto pointIt = contourIt->cbegin(); pointIt != (contourIt->cend() - 1); ++pointIt){
                     painter.drawLine(pointIt->x, pointIt->y, (pointIt + 1)->x, (pointIt + 1)->y);
                 }
-                painter.drawLine((contourIt->end() - 1)->x,
-                                 (contourIt->end() - 1)->y,
-                                 (contourIt->begin())->x,
-                                 (contourIt->begin())->y);
+                painter.drawLine((contourIt->cend() - 1)->x,
+                                 (contourIt->cend() - 1)->y,
+                                 (contourIt->cbegin())->x,
+                                 (contourIt->cbegin())->y);
             }
             
             painter.setPen(Qt::red);
@@ -91,16 +92,10 @@ void ImageArea::mousePressEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
         rectnotdrawing = false;
-        setX1(e->x());
-        setY1(e->y());
-        if (e->x() < 0)
-            setX1(0);
-        if (e->y() < 0)
-            setY1(0);
-        if (e->x() >= ImageStorage::getInstance().getImageWidth())
-            setX1(ImageStorage::getInstance().getImageWidth() - 1);
-        if (e->y() >= ImageStorage::getInstance().getImageHeight())
-            setY1(ImageStorage::getInstance().getImageHeight() - 1);
+        setX1(std::max(0, e->x()));
+        setY1(std::max(0, e->y()));
+        setX1(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
+        setY1(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
     }
 }
 
@@ -111,16 +106,10 @@ void ImageArea::mousePressEvent(QMouseEvent* e)
 void ImageArea::mouseReleaseEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
-        setX2(e->x());
-        setY2(e->y());
-        if (e->x() < 0)
-            setX2(0);
-        if (e->y() < 0)
-            setY2(0);
-        if (e->x() >= ImageStorage::getInstance().getImageWidth())
-            setX2(ImageStorage::getInstance().getImageWidth() - 1);
-        if (e->y() >= ImageStorage::getInstance().getImageHeight())
-            setY2(ImageStorage::getInstance().getImageHeight() - 1);
+        setX2(std::max(0, e->x()));
+        setY2(std::max(0, e->y()));
+        setX2(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
+        setY2(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
         rectnotdrawing = true;
         emit rectChanged(bounds);
         update();
@@ -134,16 +123,10 @@ void ImageArea::mouseReleaseEvent(QMouseEvent* e)
 void ImageArea::mouseMoveEvent(QMouseEvent* e)
 {
     if (e->buttons() & Qt::LeftButton) {
-        setX2(e->x());
-        setY2(e->y());
-        if (e->x() < 0)
-            setX2(0);
-        if (e->y() < 0)
-            setY2(0);
-        if (e->x() > ImageStorage::getInstance().getImageWidth())
-            setX2(ImageStorage::getInstance().getImageWidth());
-        if (e->y() > ImageStorage::getInstance().getImageHeight())
-            setY2(ImageStorage::getInstance().getImageHeight());
+        setX2(std::max(0, e->x()));
+        setY2(std::max(0, e->y()));
+        setX2(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
+        setY2(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
         update();
     } else {
     }
@@ -155,6 +138,7 @@ void ImageArea::mouseMoveEvent(QMouseEvent* e)
  */
 void ImageArea::frameChanged(QImage image, Contours _contours)
 {
+    assert(!image.isNull());
     ImageStorage::getInstance().setImage(image);
     contours = _contours;
     rectnotdrawing = true;

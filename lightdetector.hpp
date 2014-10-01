@@ -28,6 +28,8 @@ public:
     void setPeriod(double period);
     void stopThis();
     ~LightDetector();
+    void readSettings();
+    void writeSettings();
 signals:
     void progress(int);
 public slots:

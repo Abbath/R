@@ -44,6 +44,7 @@ public:
     ~MainWindow();
     void openVideo();
     void openImage();
+    QString seconds2HMS(double value);
 public slots:
     void setProcessor(VideoProcessor * p) { videoProcessor = p; }
     void setBounds(QRect rect);
@@ -51,7 +52,6 @@ private slots:
     void on_horizontalSlider_valueChanged(int value);
     void on_actionOpen_triggered();
     void on_action3D_triggered(bool checked);
-    void on_pushButton_clicked();
     void on_spinBox_X1_valueChanged(int arg1);
     void on_spinBox_Y1_valueChanged(int arg1);
     void on_spinBox_X2_valueChanged(int arg1);
@@ -80,7 +80,6 @@ private:
     QDoubleSpinBox* period;
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
-    unsigned frameCount;
     unsigned fps;
     
     QwtToolSet lightsNumbersPlot;

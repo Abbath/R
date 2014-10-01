@@ -7,17 +7,7 @@
  */
 cv::Mat ImageConverter::QImage2Mat(QImage &src)
 {
-//    if(src.format() == QImage::Format_RGB888){
-//        cv::Mat tmp1(src.height(), src.width(), CV_8UC3, (uchar*)src.bits(), src.bytesPerLine());
-//        tmp1.copyTo(tmp);
-//    }else if(src.format() == QImage::Format_RGB32){
-//        cv::Mat tmp1(src.height(), src.width(), CV_8UC4, (uchar*)src.bits(), src.bytesPerLine());
-//        tmp1.copyTo(tmp);
-//    }else {
-//        auto src1 = src.convertToFormat(QImage::Format_RGB888);
-//        cv::Mat tmp1(src1.height(), src1.width(), CV_8UC3, (uchar*)src1.bits(), src1.bytesPerLine());
-//        tmp1.copyTo(tmp);
-//    }
+    assert(!src.isNull());
     if(src.format() != QImage::Format_RGB888){
        src = src.convertToFormat(QImage::Format_RGB888);
     }
@@ -34,6 +24,7 @@ cv::Mat ImageConverter::QImage2Mat(QImage &src)
  */
 QImage ImageConverter::Mat2QImage(const cv::Mat &src)
 {
+    assert(!src.empty());
     cv::Mat temp;
     
     if(src.channels() == 1){

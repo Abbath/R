@@ -41,13 +41,6 @@ MainWindow::MainWindow(QWidget* parent)
     
     readSettings();
 
-    QRect bounds = ui->imagearea->getBounds();
-
-    ui->spinBox_X1->setValue(bounds.left());
-    ui->spinBox_Y1->setValue(bounds.top());
-    ui->spinBox_X2->setValue(bounds.right());
-    ui->spinBox_Y2->setValue(bounds.bottom());
-
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
     qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
@@ -102,6 +95,10 @@ void MainWindow::writeSettings()
     settings.setValue("sens", sens->value());
     settings.setValue("period", period->value());
     settings.setValue("bounds", ui->imagearea->getBounds());
+    settings.setValue("X1", ui->spinBox_X1->value());
+    settings.setValue("X2", ui->spinBox_X2->value());
+    settings.setValue("Y1", ui->spinBox_Y1->value());
+    settings.setValue("Y2", ui->spinBox_Y2->value());
     settings.endGroup();
 }
 
@@ -117,6 +114,10 @@ void MainWindow::readSettings()
     period->setValue(settings.value("MW/period").toDouble());
     setBounds(settings.value("MW/bounds").toRect());
     ui->imagearea->setBounds(settings.value("MW/bounds").toRect());
+    ui->spinBox_X1->setValue(settings.value("MW/X1").toInt());
+    ui->spinBox_X2->setValue(settings.value("MW/X2").toInt());
+    ui->spinBox_Y1->setValue(settings.value("MW/Y1").toInt());
+    ui->spinBox_Y2->setValue(settings.value("MW/Y2").toInt());
 }
 
 /*!
@@ -141,7 +142,7 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
         } else {
             imageProcessor->setLightThreshold(value);
             if(!imageFileName.isNull() && !videoFileName.isNull()){
-                 QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
+                 QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
                  ui->label_light->setNum(id.first);
                  ui->label_mean->setNum(id.second);
             }
@@ -156,7 +157,7 @@ void MainWindow::openImage()
 {
     ImageStorage::getInstance().loadImage(imageFileName);
     if(ImageStorage::getInstance().getImage().isNull()){
-        QMessageBox::warning(0, "Error", "Image open failed (file not found?)\n");            
+        QMessageBox::critical(0, "Error", "Image open failed (file not found?)\n");            
     }else{
         ui->spinBox_X1->setMaximum(ImageStorage::getInstance().getImageWidth());
         ui->spinBox_Y1->setMaximum(ImageStorage::getInstance().getImageHeight());
@@ -166,7 +167,7 @@ void MainWindow::openImage()
         imageProcessor->setBounds(ui->imagearea->getBounds());
         ui->imagearea->setEnabled(true);
         ui->imagearea->clearContours();
-        QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
+        QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
     }    
@@ -207,20 +208,6 @@ void MainWindow::on_action3D_triggered(bool checked)
 }
 
 /*!
- * \brief MainWindow::on_pushButton_clicked
- */
-void MainWindow::on_pushButton_clicked()
-{
-    QFile file("bounds.conf");
-    if(file.open(QFile::WriteOnly | QFile::Truncate)){
-        QTextStream str(&file);
-        str << ui->spinBox_X1->value() << "\n" << ui->spinBox_Y1->value() << "\n" << ui->spinBox_X2->value() << "\n" << ui->spinBox_Y2->value();
-    }else{
-        QMessageBox::warning(this, "Error", "Failed to save bounds!");
-    }
-}
-
-/*!
  * \brief MainWindow::setBounds
  * \param rect
  */
@@ -238,7 +225,7 @@ void MainWindow::setBounds(QRect rect)
         imageProcessor->setLightThreshold(ui->spinBox->value());
         imageProcessor->setBounds(rect);
         if(!ImageStorage::getInstance().isImageNull()){
-            QPair<int, double> id = imageProcessor->processImage(ImageStorage::getInstance().getImage());
+            QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         }
@@ -308,14 +295,14 @@ void MainWindow::openVideo()
     try{
         capture.isOpened();
         auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-        auto fps = capture.get(CV_CAP_PROP_FPS);
+        fps = capture.get(CV_CAP_PROP_FPS);
         auto videoLength = frameNumber / double(fps);
-        cv::Mat frame;
-        capture.read(frame);
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
         period->setMaximum(videoLength);
         videoProcessor->setFilename(videoFileName);
+        cv::Mat frame;
+        capture.read(frame);
         QImage image = ImageConverter::Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
@@ -326,7 +313,7 @@ void MainWindow::openVideo()
         ImageStorage::getInstance().setImage(image.mirrored(false, true));
         ui->imagearea->update();
     }catch(CaptureError e){
-        QMessageBox::warning(this, "Error", e.getMessage());
+        QMessageBox::critical(this, "Error", e.getMessage());
     }
 }
 
@@ -359,8 +346,6 @@ void MainWindow::plotResults(std::shared_ptr<Results> r)
     
     this->lightPixelsNumbers = r->resultsNumbers;
     this->lightPixelsMeans = r->resultMeans;
-    this->frameCount = r->frameCount;
-    this->fps = r->fps;
     
     ui->l_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
     ui->m_plot->detachItems(QwtPlotItem::Rtti_PlotCurve, false);
@@ -425,7 +410,7 @@ void MainWindow::on_actionSave_triggered()
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
         for (int i = 0; i < lightPixelsNumbers.size(); ++i) {
-            str << i << " " << i/double(frameCount)/fps << " " << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
+            str << i << " " << i/double(fps) << " " << lightPixelsNumbers[i] << " " << lightPixelsMeans[i] << '\n';
         }
     } else {
         QMessageBox::warning(this, "Warning!", "Can not open file for writing!");
@@ -461,12 +446,22 @@ void MainWindow::progress(int value)
  * \brief MainWindow::time
  * \param value
  */
+QString MainWindow::seconds2HMS(double value)
+{
+    int oddSeconds =  int(value) % 60;
+    QString s =  oddSeconds < 10 ? "0" + QString::number(oddSeconds) : QString::number(oddSeconds);
+    int oddMinutes = int(value) % 3600 / 60;
+    QString m = oddMinutes < 10 ? "0" + QString::number(oddMinutes) : QString::number(oddMinutes);
+    QString h = QString::number(int(value) / 3600);
+    QString t = h + ":" + m + ":" + s;
+    
+    return t;
+}
+
 void MainWindow::time(double value)
 {
-    QString s = int(value) % 60 < 10 ? "0" + QString::number(int(value) % 60) : QString::number(int(value) % 60);
-    QString m = int(value) % 3600 / 60 < 10 ? "0" + QString::number(int(value) % 3600 / 60) : QString::number(int(value) % 3600 / 60);
-    QString h = QString::number(int(value) / 3600);
-    ui->label_8->setText(h + ":" + m + ":" + s);
+    QString t = seconds2HMS(value);
+    ui->label_8->setText(t);
 }
 
 /*!
@@ -536,6 +531,10 @@ void MainWindow::sensChanged(int value)
     videoProcessor->setSensitivity(value);
 }
 
+/*!
+ * \brief MainWindow::periodChanged
+ * \param value
+ */
 void MainWindow::periodChanged(double value)
 {
     videoProcessor->setPeriod(value);

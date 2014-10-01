@@ -16,12 +16,12 @@ public:
     void loadImage(QString filename){ image.load(filename); }
     int getImageWidth() const { return image.width(); }
     int getImageHeight() const { return image.height(); }
-    bool isImageNull(){ return image.isNull(); }
+    bool isImageNull() const { return image.isNull(); }
 private:
     QImage image;
     static std::unique_ptr<ImageStorage> instance;
     static std::once_flag onceFlag;
-    ImageStorage(void);
+    ImageStorage();
     ImageStorage(const ImageStorage& src);
     ImageStorage& operator=(const ImageStorage& rhs);
 };

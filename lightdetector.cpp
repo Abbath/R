@@ -10,9 +10,17 @@ LightDetector::LightDetector(QObject *parent) :
     period(1.0),
     sensitivity(60)
 {
+    readSettings();
+}
+
+/*!
+ * \brief LightDetector::readSettings
+ */
+void LightDetector::readSettings()
+{
     QSettings settings("CAD", "R");
     period = settings.value("LD/period").toDouble();
-    sensitivity = settings.value("LD/sens").toInt();
+    sensitivity = settings.value("LD/sens").toInt();    
 }
 
 /*!
@@ -23,6 +31,7 @@ LightDetector::LightDetector(QObject *parent) :
  */
 QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
 {
+    assert(!filename.isEmpty());
     stop = false;
     CaptureWrapper capture(filename);
     cv::Mat tmp;
@@ -81,6 +90,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
                 
                 cv::absdiff(frame, oldframe, dif);
                 cv::threshold(dif, dif, (100 - sensitivity), 255, cv::THRESH_BINARY);
+                
                 cv::bitwise_or(dif, tmp, tmp);
                 
                 int relIndex = absIndex - int(range.first * fps);
@@ -96,6 +106,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
         QMessageBox::warning(0, "Error", e.getMessage());
         return QRect(0, 0, 0, 0);
     }
+    
     
     cv::flip(tmp, tmp, 0);
     cv::Mat diffMap(tmp.rows, tmp.cols, CV_8UC1);
@@ -135,6 +146,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
  */
 void LightDetector::fixRange(QPair<double, double>& range, int fps, int frameNumber)
 {
+    assert(fps != 0);
     if(range.first == -1){
         range.first = 0;
     }    
@@ -184,11 +196,16 @@ void LightDetector::stopThis()
 /*!
  * \brief LightDetector::~LightDetector
  */
-LightDetector::~LightDetector()
+void LightDetector::writeSettings()
 {
     QSettings settings("CAD", "R");
     settings.beginGroup("LD");
     settings.setValue("period", period);
     settings.setValue("sens", sensitivity);
-    settings.endGroup();
+    settings.endGroup();    
+}
+
+LightDetector::~LightDetector()
+{
+    writeSettings();
 }

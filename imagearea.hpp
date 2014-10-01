@@ -28,16 +28,15 @@ public:
     void mousePressEvent(QMouseEvent *e);
     void mouseReleaseEvent(QMouseEvent *e);
     void mouseMoveEvent(QMouseEvent *e);
-    void readConfig(QString confname);
 
-    QRect getBounds(){ return bounds;}
-    void setBounds(QRect _bounds){ bounds = _bounds; }
+    QRect getBounds() const { return bounds;}
+    void setBounds(const QRect& _bounds){ bounds = _bounds; }
     void clearContours(){ contours.clear(); }
  
-    int x1(){ return bounds.left(); }
-    int x2(){ return bounds.right(); }
-    int y1(){ return bounds.top(); }
-    int y2(){ return bounds.bottom(); }
+    int x1() const { return bounds.left(); }
+    int x2() const { return bounds.right(); }
+    int y1() const { return bounds.top(); }
+    int y2() const { return bounds.bottom(); }
     
     void setX1(int _x1){ bounds.setLeft(_x1); }
     void setX2(int _x2){ bounds.setRight(_x2); }

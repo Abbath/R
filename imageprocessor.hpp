@@ -19,11 +19,11 @@ class ImageProcessor : public QObject
 
 public:
     explicit ImageProcessor(QObject *parent = 0);
-    QPair<int, double> processImage(QImage _image);
-    QPair<int, double> processImage(cv::Mat &m);
+    QPair<int, double> process(QImage _image);
+    QPair<int, double> process(cv::Mat &m);
     
     void setLightThreshold(unsigned th);
-    void setBounds(QRect _bounds);
+    void setBounds(const QRect& _bounds);
     
 signals:
     void frameChanged(QImage image, Contours contours);
@@ -33,7 +33,6 @@ public slots:
 private:
     unsigned int lightThreshold;
     QRect bounds;
-    QImage drawOnQImage(QImage image, Contours contours);
     double mean(cv::Mat image, Contour contour);
 };
 

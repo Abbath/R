@@ -98,7 +98,7 @@ void VideoProcessor::run()
             int relIndex = absIndex - int(range.first * fps);
             
             const int hundreds = int((range.second - range.first) * fps) / 100;
-            if (!(relIndex % (hundreds))) {
+            if (hundreds && !(relIndex % (hundreds))) {
                 emit progress(relIndex / (hundreds));
             }
             

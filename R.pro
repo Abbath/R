@@ -60,12 +60,12 @@ OTHER_FILES += \
 win32:CONFIG(release, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwt
 else:win32:CONFIG(debug, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwtd
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_core249
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_core249d
+win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_core249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_core249d
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_imgproc249
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_imgproc249d
+win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_imgproc249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_imgproc249d
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_highgui249
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/D:/opencv/build/x86/vc12/lib/ -lopencv_highgui249d
+win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_highgui249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_highgui249d
 

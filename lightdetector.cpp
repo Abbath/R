@@ -33,6 +33,15 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
 {
     assert(!filename.isEmpty());
     stop = false;
+    
+    std::ifstream f(filename.toStdString().c_str(), std::ifstream::binary | std::ifstream::in);
+    f.seekg(108+20, f.beg);
+    int scale;
+    f.read((char*)&scale, 4);
+    int rate;
+    f.read((char*)&rate, 4);
+    f.close();
+    
     CaptureWrapper capture(filename);
     cv::Mat tmp;
     try{
@@ -41,7 +50,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
         cv::Mat frame, oldframe, dif;
         
         int frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-        int fps = capture.get(CV_CAP_PROP_FPS); 
+        int fps = floor(double(rate / scale)+0.5); //capture.get(CV_CAP_PROP_FPS); 
         
         fixRange(range, fps, frameNumber);
         

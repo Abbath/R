@@ -34,8 +34,8 @@ ImageArea::~ImageArea()
  */
 void ImageArea::boundsChanged(QRect _bounds)
 {
-    assert(_bounds.isValid());
-    bounds = _bounds;
+    //assert(_bounds.isValid());
+    bounds = _bounds.normalized();
     update();
 }
 

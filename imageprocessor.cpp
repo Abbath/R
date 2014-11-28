@@ -14,13 +14,14 @@ ImageProcessor::ImageProcessor(QObject *parent) :
  * \param _image
  * \return 
  */
-QPair<int, double> ImageProcessor::processImage(QImage _image)
+QPair<int, double> ImageProcessor::process(QImage _image)
 {
+    assert(!_image.isNull());
     if(_image.isNull()){
         return qMakePair(0, 0.0l);
     }
     cv::Mat m = ImageConverter::QImage2Mat(_image);
-    return processImage(m);
+    return process(m);
 }
 
 /*!
@@ -28,8 +29,9 @@ QPair<int, double> ImageProcessor::processImage(QImage _image)
  * \param m
  * \return 
  */
-QPair<int, double> ImageProcessor::processImage(cv::Mat &m)
+QPair<int, double> ImageProcessor::process(cv::Mat &m)
 {
+    assert(!m.empty() && m.channels() == 1);
     cv::Mat matCopy;
     m.copyTo(matCopy);
     
@@ -41,7 +43,8 @@ QPair<int, double> ImageProcessor::processImage(cv::Mat &m)
     Contours contours;
     cv::findContours(m, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
     
-    double lightArea = 0, lightMean = 0;
+    double lightArea = 0;
+    double lightMean = 0;
     
     for (auto& c : contours){
         auto localLightArea = cv::contourArea(c);
@@ -60,10 +63,8 @@ QPair<int, double> ImageProcessor::processImage(cv::Mat &m)
     }else{
         lightMean = 0;
     }
-    
-    if(lightMean < lightThreshold){
-        lightMean = lightThreshold;
-    }
+        
+    lightMean = std::max(lightMean, double(lightThreshold));
     
     emit frameChanged(ImageConverter::Mat2QImage(matCopy), contours);
     
@@ -85,7 +86,7 @@ void ImageProcessor::setLightThreshold(unsigned th)
  * \brief ImageProcessor::setBounds
  * \param _bounds
  */
-void ImageProcessor::setBounds(QRect _bounds)
+void ImageProcessor::setBounds(const QRect &_bounds)
 {
     if(_bounds != QRect(0, 0, 0, 0)){
         bounds = _bounds.normalized();
@@ -100,6 +101,12 @@ void ImageProcessor::setBounds(QRect _bounds)
  */
 double ImageProcessor::mean(cv::Mat image, Contour contour)
 {
+    assert(!image.empty());
+    
+    if(contour.size() == 0){
+        return 0.0l;
+    }
+    
     cv::Mat imageWithContour(image.clone());
     cv::drawContours(imageWithContour, Contours(1, contour), -1, cv::Scalar(255, 255, 255));
     
@@ -110,28 +117,8 @@ double ImageProcessor::mean(cv::Mat image, Contour contour)
     
     cv::drawContours(mask, Contours(1, contour), -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
     
-    auto mean(cv::mean(crop, mask));
+    auto meanValue = cv::mean(crop, mask);
     
-    return mean[0];
+    return meanValue[0];
 }
 
-/*!
- * \brief ImageProcessor::drawOnQImage
- * \param image
- * \param contours
- * \return 
- */
-QImage ImageProcessor::drawOnQImage(QImage image, Contours contours)
-{
-    QPainter p;
-    p.begin(&image);
-    p.setPen(QPen(QColor(0, 255, 0)));
-    
-    for(auto contourIt = contours.begin(); contourIt != contours.end(); ++contourIt){
-        for(auto pointIt = contourIt->begin(); pointIt != (contourIt->end() - 1); ++pointIt){
-            p.drawLine(pointIt->x, pointIt->y, (pointIt + 1)->x, (pointIt + 1)->y);
-        }
-        p.drawLine((contourIt->end() - 1)->x, (contourIt->end() - 1)->y, (contourIt->begin())->x, (contourIt->begin())->y);
-    }
-    return image;
-}

@@ -5,6 +5,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <iostream>
+#include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
@@ -28,6 +29,8 @@ public:
     void setPeriod(double period);
     void stopThis();
     ~LightDetector();
+    void readSettings();
+    void writeSettings();
 signals:
     void progress(int);
 public slots:

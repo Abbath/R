@@ -14,6 +14,6 @@ ImageStorage::~ImageStorage()
 }
 
 ImageStorage& ImageStorage::getInstance(){
-    std::call_once(onceFlag, []{instance.reset(new ImageStorage);});
+    std::call_once(onceFlag, []{ instance.reset(new ImageStorage); });
     return *instance.get();
 }

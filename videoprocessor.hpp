@@ -28,7 +28,7 @@ class VideoProcessor : public QObject, public QRunnable
 public:
     explicit VideoProcessor(QObject* parent = 0);
     void setFilename(QString _filename){ filename = _filename; }
-    void setAd(bool _ad) { ad = _ad; }
+    void setAd(bool _ad) { autodetection = _ad; }
     void run();
     QPair<int, double> processImage(QImage _image);
 
@@ -57,8 +57,9 @@ private:
     LightDetector* lightDetector;
     QString filename;
     QPair<double, double> range;
+    // TODO Replace with atomic_bool
     volatile bool stop;
-    bool ad;
+    bool autodetection;
     void writeSettings();
     void readSettings();
 };

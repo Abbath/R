@@ -41,21 +41,23 @@ QPair<int, double> ImageProcessor::process(cv::Mat &m)
     m = m(rec);
     
     Contours contours;
-    cv::findContours(m, contours, CV_RETR_TREE, CV_CHAIN_APPROX_NONE);
+    std::vector<cv::Vec4i> h;
+    cv::findContours(m, contours, h, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
     
     double lightArea = 0;
     double lightMean = 0;
     
-    for (auto& c : contours){
-        auto localLightArea = cv::contourArea(c);
-        lightArea += localLightArea;
-        
-        for(auto& p: c){
-            p.x += rec.x;
-            p.y += rec.y;
+    for (unsigned int i = 0; i < contours.size(); ++i){
+        for(unsigned int j = 0; j < contours[i].size(); ++j){
+            contours[i][j].x += rec.x;
+            contours[i][j].y += rec.y;
         }
-        
-        lightMean += localLightArea * mean(matCopy, c);
+        if(h[i][3] < 0){
+            auto localLightArea = cv::contourArea(contours[i]);
+            lightArea += localLightArea;
+            
+            lightMean += localLightArea * mean(matCopy, contours[i]);
+        }
     }
     
     if(lightArea != 0){
@@ -63,7 +65,7 @@ QPair<int, double> ImageProcessor::process(cv::Mat &m)
     }else{
         lightMean = 0;
     }
-        
+    
     lightMean = std::max(lightMean, double(lightThreshold));
     
     emit frameChanged(ImageConverter::Mat2QImage(matCopy), contours);

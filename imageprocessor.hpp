@@ -25,15 +25,20 @@ public:
     void setLightThreshold(unsigned th);
     void setBounds(const QRect& _bounds);
     
+    QSize getH_size() const;
+    void setH_size(const QSize &value);
+    
 signals:
     void frameChanged(QImage image, Contours contours);
-    
+    void histogram(QImage hist);
 public slots:
     
 private:
     unsigned int lightThreshold;
     QRect bounds;
+    QSize h_size;
     double mean(cv::Mat image, Contour contour);
+    cv::Mat hist(cv::Mat im);
 };
 
 #endif // IMAGEPROCESSOR_HPP

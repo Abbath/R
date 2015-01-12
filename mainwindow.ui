@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>799</width>
-    <height>485</height>
+    <height>497</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -245,6 +245,20 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab_3">
+       <attribute name="title">
+        <string>Histogram</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
       <widget class="QWidget" name="tab_2">
        <attribute name="title">
         <string>Lights</string>
@@ -330,6 +344,33 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionOpen_Video"/>
+    <addaction name="actionCapture_Device"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuSetup">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionSetup"/>
+    <addaction name="actionAutodetection"/>
+   </widget>
+   <widget class="QMenu" name="menuProcess">
+    <property name="title">
+     <string>Process</string>
+    </property>
+    <addaction name="actionRun"/>
+    <addaction name="actionStop"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuProcess"/>
+   <addaction name="menuSetup"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -340,19 +381,24 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionOpen"/>
-   <addaction name="actionSave"/>
    <addaction name="actionOpen_Video"/>
+   <addaction name="actionCapture_Device"/>
+   <addaction name="actionSave"/>
+   <addaction name="separator"/>
    <addaction name="actionRun"/>
    <addaction name="actionStop"/>
-   <addaction name="actionQuit"/>
    <addaction name="separator"/>
    <addaction name="actionSetup"/>
    <addaction name="actionAutodetection"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/folder-pictures.svg</normaloff>:/folder-pictures.svg</iconset>
+   </property>
    <property name="text">
-    <string>Open</string>
+    <string>Open Image</string>
    </property>
    <property name="toolTip">
     <string>Open Image</string>
@@ -379,6 +425,10 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/edit-image-face-recognize.svg</normaloff>:/edit-image-face-recognize.svg</iconset>
+   </property>
    <property name="text">
     <string>Bounds</string>
    </property>
@@ -390,6 +440,10 @@
    </property>
   </action>
   <action name="actionOpen_Video">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/folder-videos.svg</normaloff>:/folder-videos.svg</iconset>
+   </property>
    <property name="text">
     <string>Open Video</string>
    </property>
@@ -401,6 +455,10 @@
    </property>
   </action>
   <action name="actionRun">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/media-playback-start.svg</normaloff>:/media-playback-start.svg</iconset>
+   </property>
    <property name="text">
     <string>Run</string>
    </property>
@@ -412,11 +470,22 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/document-save.svg</normaloff>:/document-save.svg</iconset>
+   </property>
    <property name="text">
     <string>Save</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="actionStop">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/media-playback-stop.svg</normaloff>:/media-playback-stop.svg</iconset>
+   </property>
    <property name="text">
     <string>Stop</string>
    </property>
@@ -425,8 +494,12 @@
    </property>
   </action>
   <action name="actionQuit">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/window-close.svg</normaloff>:/window-close.svg</iconset>
+   </property>
    <property name="text">
-    <string>Quit</string>
+    <string>Exit</string>
    </property>
    <property name="shortcut">
     <string>Alt+X</string>
@@ -435,6 +508,10 @@
   <action name="actionAutodetection">
    <property name="checkable">
     <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/edit-image-face-recognize-a.svg</normaloff>:/edit-image-face-recognize-a.svg</iconset>
    </property>
    <property name="text">
     <string>Autodetection</string>
@@ -447,8 +524,30 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/help-about.svg</normaloff>:/help-about.svg</iconset>
+   </property>
    <property name="text">
     <string>About</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionCapture_Device">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/tools-rip-video-dvd.svg</normaloff>:/tools-rip-video-dvd.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Capture Device</string>
+   </property>
+   <property name="toolTip">
+    <string>Capture device</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
    </property>
   </action>
  </widget>
@@ -471,7 +570,9 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>horizontalSlider</sender>

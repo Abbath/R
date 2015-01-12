@@ -4,6 +4,7 @@
 #include <iostream>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QInputDialog>
 
 /*!
  * \brief MainWindow::MainWindow
@@ -37,10 +38,13 @@ MainWindow::MainWindow(QWidget* parent)
     
     videoProcessor = new VideoProcessor(this);
     imageProcessor = new ImageProcessor(this);
+    streamProcessor = new StreamProcessor(this);
     videoProcessor->setImageProcessor(imageProcessor);
+    streamProcessor->setImageProcessor(imageProcessor);
+    imageProcessor->setH_size(ui->label_5->size());
     
     readSettings();
-
+    
     qRegisterMetaType<QVector<int> >("QVector<int>");
     qRegisterMetaType<QVector<double> >("QVector<double>");
     qRegisterMetaType<std::shared_ptr<Results>>("std::shared_ptr<Results>");
@@ -56,6 +60,11 @@ MainWindow::MainWindow(QWidget* parent)
     connect(videoProcessor, SIGNAL(detection()), this, SLOT(detection()));
     connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
     connect(period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
+    connect(imageProcessor, SIGNAL(histogram(QImage)), this, SLOT(histogram(QImage)));
+    connect(streamProcessor, SIGNAL(time(double)), this, SLOT(time(double)));
+    connect(streamProcessor, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
+    connect(this, SIGNAL(stop()), streamProcessor, SLOT(stopThis()));
+    
 }
 
 /*!
@@ -126,6 +135,7 @@ void MainWindow::readSettings()
 MainWindow::~MainWindow()
 {
     videoProcessor->stopThis();
+    streamProcessor->stopThis();
     writeSettings();
     delete ui;
 }
@@ -142,9 +152,10 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
         } else {
             imageProcessor->setLightThreshold(value);
             if(!imageFileName.isNull() && !videoFileName.isNull()){
-                 QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
-                 ui->label_light->setNum(id.first);
-                 ui->label_mean->setNum(id.second);
+                imageProcessor->setH_size(ui->label_5->size());
+                QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
+                ui->label_light->setNum(id.first);
+                ui->label_mean->setNum(id.second);
             }
         }
     }
@@ -167,6 +178,7 @@ void MainWindow::openImage()
         imageProcessor->setBounds(ui->imagearea->getBounds());
         ui->imagearea->setEnabled(true);
         ui->imagearea->clearContours();
+        imageProcessor->setH_size(ui->label_5->size());        
         QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
         ui->label_light->setNum(id.first);
         ui->label_mean->setNum(id.second);
@@ -225,11 +237,17 @@ void MainWindow::setBounds(QRect rect)
         imageProcessor->setLightThreshold(ui->spinBox->value());
         imageProcessor->setBounds(rect);
         if(!ImageStorage::getInstance().isImageNull()){
+            imageProcessor->setH_size(ui->label_5->size());            
             QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
             ui->label_light->setNum(id.first);
             ui->label_mean->setNum(id.second);
         }
     }
+}
+
+void MainWindow::histogram(QImage hist)
+{
+    ui->label_5->setPixmap(QPixmap::fromImage(hist));
 }
 
 /*!
@@ -339,10 +357,10 @@ void MainWindow::on_actionOpen_Video_triggered()
  */
 void MainWindow::plotResults(std::shared_ptr<Results> r)
 {
-    assert(!r->resultMeans.isEmpty());
-    assert(!r->resultsNumbers.isEmpty());
-    assert(!r->timeStamps.isEmpty());
-    assert(r->resultMeans.size() == r->resultsNumbers.size() && r->resultMeans.size() == r->timeStamps.size());
+    if((r->resultMeans.isEmpty()) || 
+    (r->resultsNumbers.isEmpty()) ||
+    (r->timeStamps.isEmpty()) ||
+    !(r->resultMeans.size() == r->resultsNumbers.size() && r->resultMeans.size() == r->timeStamps.size())) return;
     
     this->lightPixelsNumbers = r->resultsNumbers;
     this->lightPixelsMeans = r->resultMeans;
@@ -480,6 +498,7 @@ void MainWindow::on_doubleSpinBox_2_valueChanged(double arg1)
 void MainWindow::on_doubleSpinBox_3_valueChanged(double arg1)
 {
     videoProcessor->setEnd(arg1);
+    streamProcessor->setEnd(arg1);
 }
 
 /*!
@@ -519,7 +538,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2014\nVersion 2.3.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.0\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!
@@ -538,4 +557,58 @@ void MainWindow::sensChanged(int value)
 void MainWindow::periodChanged(double value)
 {
     videoProcessor->setPeriod(value);
+}
+
+void MainWindow::on_actionCapture_Device_triggered()
+{
+    if(!isRunning){
+        QStringList items;
+        int camnum = countCameras();
+        for(int i = 0; i < camnum; i++){
+            items << QString::number(i);
+        }
+        bool ok;
+        int devnum;
+        QString dn = QInputDialog::getItem(this, "Select device to capture", "Device number:", items, 0, false, &ok);
+        if(ok && !dn.isEmpty()){
+            devnum = dn.toInt();            
+            try{
+                CaptureWrapper capture(devnum);
+                cv::Mat frame;
+                capture.read(frame);
+                cv::Mat grayFrame;
+                cv::cvtColor(frame, grayFrame, CV_BGR2GRAY, 1);
+                QImage image = ImageConverter::Mat2QImage(grayFrame);
+                ui->spinBox_X1->setMaximum(image.width());
+                ui->spinBox_Y1->setMaximum(image.height());
+                ui->spinBox_X2->setMaximum(image.width());
+                ui->spinBox_Y2->setMaximum(image.height());
+                ImageStorage::getInstance().setImage(image.mirrored(true, false));            
+            }catch(CaptureError e){
+                QMessageBox::critical(this, "Error", e.getMessage());
+            }
+            streamProcessor->setDeviceNumber(devnum);
+            imageProcessor->setLightThreshold(ui->spinBox->value());
+            imageProcessor->setBounds(ui->imagearea->getBounds());
+            ui->imagearea->setEnabled(true);
+            ui->imagearea->clearContours();
+            ui->imagearea->update();
+            isRunning = true;
+            QThreadPool::globalInstance()->start(streamProcessor);
+        }
+    }
+}
+
+int MainWindow::countCameras()
+{
+    int maxTested = 10;
+    for (int i = 0; i < maxTested; i++){
+        cv::VideoCapture temp_camera(i);
+        bool res = (!temp_camera.isOpened());
+        if (res)
+        {
+            return i;
+        }
+    }
+    return maxTested;
 }

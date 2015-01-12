@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/">
+        <file>document-open.svg</file>
+        <file>document-save.svg</file>
+        <file>media-playback-stop.svg</file>
+        <file>system-run.svg</file>
+        <file>application-exit.svg</file>
+        <file>media-playback-start.svg</file>
+        <file>window-close.svg</file>
+        <file>folder-videos.svg</file>
+        <file>edit-image-face-recognize.svg</file>
+        <file>edit-image-face-recognize-a.svg</file>
+        <file>folder-pictures.svg</file>
+        <file>tools-rip-video-dvd.svg</file>
+        <file>help-about.svg</file>
+    </qresource>
+</RCC>

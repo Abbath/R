@@ -68,7 +68,10 @@ QPair<int, double> ImageProcessor::process(cv::Mat &m)
     
     lightMean = std::max(lightMean, double(lightThreshold));
     
+    cv::Mat im = hist(matCopy(rec));
+        
     emit frameChanged(ImageConverter::Mat2QImage(matCopy), contours);
+    emit histogram(ImageConverter::Mat2QImage(im)); 
     
     QPair<int, double> result(lightArea, lightMean);
     
@@ -94,6 +97,16 @@ void ImageProcessor::setBounds(const QRect &_bounds)
         bounds = _bounds.normalized();
     }
 }
+QSize ImageProcessor::getH_size() const
+{
+    return h_size;
+}
+
+void ImageProcessor::setH_size(const QSize &value)
+{
+    h_size = value;
+}
+
 
 /*!
  * \brief ImageProcessor::mean
@@ -122,5 +135,37 @@ double ImageProcessor::mean(cv::Mat image, Contour contour)
     auto meanValue = cv::mean(crop, mask);
     
     return meanValue[0];
+}
+
+/*!
+ * \brief ImageProcessor::hist
+ * \param im
+ * \return 
+ */
+cv::Mat ImageProcessor::hist(cv::Mat im)
+{
+    int histSize = 256;
+    float range[] = {0, 256};
+    const float* histRange = { range };
+    
+    cv::Mat hist;
+    
+    cv::calcHist(&im, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+       
+    int hist_w = h_size.width(); int hist_h = h_size.height();
+    int bin_w = cvRound( (double) hist_w/histSize );
+    
+    cv::Mat histImage( hist_h, hist_w, CV_8UC3, cv::Scalar( 0,0,0) );
+    
+    cv::normalize(hist, hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat() );
+    
+    for( int i = 0; i < histSize; i++ )
+    {
+        cv::line( histImage, cv::Point( bin_w*(i), hist_h /*- cvRound(hist.at<float>(i-1))*/ ) ,
+              cv::Point( bin_w*(i), hist_h - cvRound(hist.at<float>(i)) ),
+              cv::Scalar( 0, 255, 0), 1, 8, 0  );
+    }
+    
+    return histImage;
 }
 

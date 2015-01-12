@@ -1,6 +1,7 @@
-#ifndef PROCESSOR_H
-#define PROCESSOR_H
+#ifndef STREAMPROCESSOR_HPP
+#define STREAMPROCESSOR_HPP
 
+#include <QObject>
 #include <QRunnable>
 #include <QMessageBox>
 #include <QThread>
@@ -16,35 +17,27 @@
 #include "capturewrapper.hpp"
 #include "imagestorage.hpp"
 
-/*!
- * \brief The Processor class
- */
-class VideoProcessor : public QObject, public QRunnable
+class StreamProcessor : public QObject, public QRunnable
 {
     Q_OBJECT
-    
+
     typedef std::vector<cv::Point> Contour;
     typedef std::vector<Contour> Contours;
 public:
-    explicit VideoProcessor(QObject* parent = 0);
-    void setFilename(QString _filename){ filename = _filename; }
-    void setAd(bool _ad) { autodetection = _ad; }
+    explicit StreamProcessor(QObject *parent = 0);
+    void setDeviceNumber(quint32 devnum){ deviceNumber = devnum; }
     void run();
     QPair<int, double> processImage(QImage _image);
 
     void setStart(double value);
     void setEnd(double value);
     
-    void setSensitivity(unsigned int value);
-    void setPeriod(double value);
     void setImageProcessor(ImageProcessor* ip);
     
-    ~VideoProcessor();
+    ~StreamProcessor();
     
 signals:
-    void rectChanged(QRect rect);
-    void detection();
-    void progress(int);
+    void frameChanged(QImage frame);
     void time(double);
     void displayResults(std::shared_ptr<Results> r);
 
@@ -53,14 +46,12 @@ public slots:
 
 private:
     ImageProcessor* imageProcessor;
-    LightDetector* lightDetector;
-    QString filename;
-    QPair<double, double> range;
+    quint32 deviceNumber;
+    qint32 end;
     // TODO Replace with atomic_bool
     volatile bool stop;
-    bool autodetection;
     void writeSettings();
     void readSettings();
 };
 
-#endif // PROCESSOR_H
+#endif // STREAMPROCESSOR_HPP

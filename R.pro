@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui 
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 qtHaveModule(opengl) {
@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     lightdetector.cpp \
     capturewrapper.cpp \
     videoprocessor.cpp \
-    imagestorage.cpp
+    imagestorage.cpp \
+    streamprocessor.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.hpp \
     lightdetector.hpp \
     capturewrapper.hpp \
     videoprocessor.hpp \
-    imagestorage.hpp
+    imagestorage.hpp \
+    streamprocessor.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui
@@ -51,7 +53,8 @@ INCLUDEPATH += "D:\qwt-6.1.0\qwt-6.1.0\qwt"
 }
 
 RESOURCES += \
-    shaders.qrc
+    shaders.qrc \
+    icons.qrc
 
 OTHER_FILES += \
     vshader.glsl \

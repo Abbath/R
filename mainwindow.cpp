@@ -1,5 +1,6 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
+#include "capturedialog.hpp"
 #include <qwt_scale_draw.h>
 #include <iostream>
 #include <QFileDialog>
@@ -64,7 +65,6 @@ MainWindow::MainWindow(QWidget* parent)
     connect(streamProcessor, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(streamProcessor, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
     connect(this, SIGNAL(stop()), streamProcessor, SLOT(stopThis()));
-    
 }
 
 /*!
@@ -358,9 +358,9 @@ void MainWindow::on_actionOpen_Video_triggered()
 void MainWindow::plotResults(std::shared_ptr<Results> r)
 {
     if((r->resultMeans.isEmpty()) || 
-    (r->resultsNumbers.isEmpty()) ||
-    (r->timeStamps.isEmpty()) ||
-    !(r->resultMeans.size() == r->resultsNumbers.size() && r->resultMeans.size() == r->timeStamps.size())) return;
+            (r->resultsNumbers.isEmpty()) ||
+            (r->timeStamps.isEmpty()) ||
+            !(r->resultMeans.size() == r->resultsNumbers.size() && r->resultMeans.size() == r->timeStamps.size())) return;
     
     this->lightPixelsNumbers = r->resultsNumbers;
     this->lightPixelsMeans = r->resultMeans;
@@ -562,16 +562,11 @@ void MainWindow::periodChanged(double value)
 void MainWindow::on_actionCapture_Device_triggered()
 {
     if(!isRunning){
-        QStringList items;
-        int camnum = countCameras();
-        for(int i = 0; i < camnum; i++){
-            items << QString::number(i);
-        }
-        bool ok;
-        int devnum;
-        QString dn = QInputDialog::getItem(this, "Select device to capture", "Device number:", items, 0, false, &ok);
-        if(ok && !dn.isEmpty()){
-            devnum = dn.toInt();            
+        videoFileName.clear();
+        CaptureDialog dialog;
+        dialog.setItems(countCameras());
+        if(dialog.exec() == QDialog::Accepted){
+            int devnum = dialog.getDeviceNumber();            
             try{
                 CaptureWrapper capture(devnum);
                 cv::Mat frame;
@@ -593,9 +588,16 @@ void MainWindow::on_actionCapture_Device_triggered()
             ui->imagearea->setEnabled(true);
             ui->imagearea->clearContours();
             ui->imagearea->update();
+            if(dialog.isRecord()){
+                streamProcessor->setRecord(true);  
+                streamProcessor->setFilename(dialog.getFileName());
+                streamProcessor->setFPS(dialog.getFps());
+            }else{
+                streamProcessor->setRecord(false);
+            }
             isRunning = true;
             QThreadPool::globalInstance()->start(streamProcessor);
-        }
+        }   
     }
 }
 

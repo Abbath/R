@@ -38,10 +38,10 @@ public:
     int y1() const { return bounds.top(); }
     int y2() const { return bounds.bottom(); }
     
-    void setX1(int _x1){ bounds.setLeft(_x1); }
-    void setX2(int _x2){ bounds.setRight(_x2); }
-    void setY1(int _y1){ bounds.setTop(_y1); }
-    void setY2(int _y2){ bounds.setBottom(_y2); }
+    void setX1(int _x1){ bounds.setLeft(std::max(0, _x1)); }
+    void setX2(int _x2){ bounds.setRight(std::max(0, _x2)); }
+    void setY1(int _y1){ bounds.setTop(std::max(0, _y1)); }
+    void setY2(int _y2){ bounds.setBottom(std::max(0, _y2)); }
     
     ~ImageArea();
 

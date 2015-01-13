@@ -31,6 +31,9 @@ public:
 
     void setStart(double value);
     void setEnd(double value);
+    void setRecord(bool r);
+    void setFilename(QString filename);
+    void setFPS(int fps);
     
     void setImageProcessor(ImageProcessor* ip);
     
@@ -47,9 +50,12 @@ public slots:
 private:
     ImageProcessor* imageProcessor;
     quint32 deviceNumber;
+    QString filename;
+    int FPS;
     qint32 end;
     // TODO Replace with atomic_bool
     volatile bool stop;
+    bool record;
     void writeSettings();
     void readSettings();
 };

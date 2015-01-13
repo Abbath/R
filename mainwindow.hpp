@@ -101,7 +101,7 @@ private:
     void initPlot(QwtPlot *plot, QwtToolSet& toolset, QString title, QString xlabel, QString ylabel);
     void writeSettings();
     void readSettings();
-    int countCameras();
+    QStringList countCameras();
 };
 
 #endif // MAINWINDOW_HPP

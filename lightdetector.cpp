@@ -57,7 +57,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
         if(period >= fabs(range.second - range.first) && (range.second - range.first) * fps >= 10){
             period = (range.second - range.first) / 2;
         }else if((range.second - range.first) * fps < 10){
-            QMessageBox::warning(0, "Error", "Too small range for autodetection\n");        
+            QMessageBox::critical(0, "Error", "Too small range for autodetection\n");        
             return QRect(0, 0, 0, 0);;
         }
         
@@ -112,7 +112,7 @@ QRect LightDetector::detectLight(QString filename, QPair<double, double> range)
         }
     }
     catch(CaptureError e){
-        QMessageBox::warning(0, "Error", e.getMessage());
+        QMessageBox::critical(0, "Error", e.getMessage());
         return QRect(0, 0, 0, 0);
     }
     

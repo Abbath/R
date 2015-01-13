@@ -22,6 +22,7 @@ class CaptureWrapper
 {
 public:
     CaptureWrapper(QString filename);
+    CaptureWrapper(int n);
     void isOpened() const;
     void grab();
     void read(cv::Mat& frame);

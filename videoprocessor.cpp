@@ -84,6 +84,7 @@ void VideoProcessor::run()
             QPair<int, double> processingResult;
             
             if(imageProcessor){
+                imageProcessor->setH_size(QSize(640, 480));
                 processingResult = imageProcessor->process(grayFrame);
             }else{
                 QMessageBox::critical(0, "Error", "No image processor is set!\nContact with developer!");

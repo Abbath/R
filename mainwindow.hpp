@@ -7,6 +7,7 @@
 #include <QtWidgets>
 #include "imagearea.hpp"
 #include "videoprocessor.hpp"
+#include "streamprocessor.hpp"
 #include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "capturewrapper.hpp"
@@ -48,6 +49,7 @@ public:
 public slots:
     void setProcessor(VideoProcessor * p) { videoProcessor = p; }
     void setBounds(QRect rect);
+    void histogram(QImage hist);
 private slots:
     void on_horizontalSlider_valueChanged(int value);
     void on_actionOpen_triggered();
@@ -72,6 +74,8 @@ private slots:
     void on_actionAbout_triggered();
     void sensChanged(int value);
     void periodChanged(double value);
+    void on_actionCapture_Device_triggered();
+    
 signals:
     void stop();
 
@@ -88,6 +92,7 @@ private:
     Ui::MainWindow *ui;
     VideoProcessor *videoProcessor;
     ImageProcessor *imageProcessor;
+    StreamProcessor *streamProcessor;
 
     QString imageFileName;
     QString videoFileName;
@@ -96,6 +101,7 @@ private:
     void initPlot(QwtPlot *plot, QwtToolSet& toolset, QString title, QString xlabel, QString ylabel);
     void writeSettings();
     void readSettings();
+    int countCameras();
 };
 
 #endif // MAINWINDOW_HPP

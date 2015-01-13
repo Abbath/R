@@ -9,6 +9,11 @@ CaptureWrapper::CaptureWrapper(QString filename) : capture(filename.toStdString(
     assert(!filename.isEmpty());
 }
 
+CaptureWrapper::CaptureWrapper(int n) : capture(n)
+{
+    
+}
+
 /*!
  * \brief CaptureWrapper::isOpened
  */

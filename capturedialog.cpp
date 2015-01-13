@@ -13,11 +13,9 @@ CaptureDialog::~CaptureDialog()
     delete ui;
 }
 
-void CaptureDialog::setItems(int itemnum)
+void CaptureDialog::setItems(QStringList items)
 {
-    for (int i = 0; i < itemnum; ++i) {
-        ui->deviceNum->addItem(QString::number(i));
-    }
+        ui->deviceNum->addItems(items);   
 }
 
 int CaptureDialog::getDeviceNumber()

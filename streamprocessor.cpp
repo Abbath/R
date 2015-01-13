@@ -74,7 +74,6 @@ void StreamProcessor::run()
             QThread::currentThread()->usleep(50);
         }
         
-        
         std::shared_ptr<Results> results(new Results);
         results->resultsNumbers = lightPixelsNumbers;
         results->resultMeans = lightPixelsMeans;

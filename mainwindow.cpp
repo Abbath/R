@@ -538,7 +538,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.0\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!
@@ -601,16 +601,17 @@ void MainWindow::on_actionCapture_Device_triggered()
     }
 }
 
-int MainWindow::countCameras()
+QStringList MainWindow::countCameras()
 {
+    QStringList list;
     int maxTested = 10;
     for (int i = 0; i < maxTested; i++){
         cv::VideoCapture temp_camera(i);
-        bool res = (!temp_camera.isOpened());
+        bool res = temp_camera.isOpened();
         if (res)
         {
-            return i;
+            list << QString::number(i);
         }
     }
-    return maxTested;
+    return list;
 }

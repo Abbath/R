@@ -14,7 +14,7 @@ class CaptureDialog : public QDialog
 public:
     explicit CaptureDialog(QWidget *parent = 0);
     ~CaptureDialog();
-    void setItems(int itemnum);
+    void setItems(QStringList items);
     int getDeviceNumber();
     QString getFileName();
     int getFps();

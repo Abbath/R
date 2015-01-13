@@ -51,7 +51,7 @@ QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra
 }
 
 win32{
-INCLUDEPATH += "E:\opencv-2.4.9\opencv-2.4.9-build\include"
+INCLUDEPATH += "E:\opencv\build\include"
 INCLUDEPATH += "E:\qwt-6.1.0\qwt-6.1.0\qwt"
 }
 

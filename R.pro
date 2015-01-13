@@ -48,8 +48,8 @@ QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra
 }
 
 win32{
-INCLUDEPATH += "D:\opencv\build\include"
-INCLUDEPATH += "D:\qwt-6.1.0\qwt-6.1.0\qwt"
+INCLUDEPATH += "E:\opencv-2.4.9\opencv-2.4.9-build\include"
+INCLUDEPATH += "E:\qwt-6.1.0\qwt-6.1.0\qwt"
 }
 
 RESOURCES += \
@@ -63,12 +63,12 @@ OTHER_FILES += \
 win32:CONFIG(release, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwt
 else:win32:CONFIG(debug, debug|release): LIBS += -L"C:/Qwt-6.1.0/lib/" -lqwtd
 
-win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_core249
-else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_core249d
+win32:CONFIG(release, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_core249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_core249d
 
-win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_imgproc249
-else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_imgproc249d
+win32:CONFIG(release, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_imgproc249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_imgproc249d
 
-win32:CONFIG(release, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_highgui249
-else:win32:CONFIG(debug, debug|release): LIBS += -L"D:/opencv/build/x86/vc12/lib" -lopencv_highgui249d
+win32:CONFIG(release, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_highgui249
+else:win32:CONFIG(debug, debug|release): LIBS += -L"E:\opencv-2.4.9\opencv-2.4.9-build\lib" -lopencv_highgui249d
 

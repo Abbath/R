@@ -152,7 +152,7 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
             //ui->widget_3d->setStep((float)value/255.0);
         } else {
             imageProcessor->setLightThreshold(value);
-            if(!imageFileName.isNull() && !videoFileName.isNull()){
+            if(!imageFileName.isNull() || !videoFileName.isNull()){
                 imageProcessor->setH_size(ui->label_5->size());
                 QPair<int, double> id = imageProcessor->process(ImageStorage::getInstance().getImage());
                 ui->label_light->setNum(id.first);

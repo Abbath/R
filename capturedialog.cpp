@@ -1,5 +1,6 @@
 #include "capturedialog.hpp"
 #include "ui_capturedialog.h"
+#include <QFileDialog>
 
 CaptureDialog::CaptureDialog(QWidget *parent) :
     QDialog(parent),
@@ -44,4 +45,13 @@ int CaptureDialog::getFps()
 bool CaptureDialog::isRecord()
 {
     return ui->groupBox->isChecked();
+}
+
+void CaptureDialog::on_pushButton_clicked()
+{
+    QString name = QFileDialog::getSaveFileName(this, "Save video", ".", "Video files (*.avi)");
+    if(!name.endsWith(".avi")){
+        name += ".avi";
+    }
+    ui->fileName->setText(name);
 }

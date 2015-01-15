@@ -76,6 +76,8 @@ private slots:
     void periodChanged(double value);
     void on_actionCapture_Device_triggered();
     
+    void on_actionSnapshot_triggered();
+    
 signals:
     void stop();
 

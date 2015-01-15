@@ -136,6 +136,7 @@ MainWindow::~MainWindow()
 {
     videoProcessor->stopThis();
     streamProcessor->stopThis();
+    QThread::currentThread()->msleep(50);
     writeSettings();
     delete ui;
 }
@@ -225,7 +226,7 @@ void MainWindow::on_action3D_triggered(bool checked)
  */
 void MainWindow::setBounds(QRect rect)
 {
-    if(!isRunning){
+    if(!isRunning || videoFileName.isEmpty()){
         ui->spinBox_X1->setValue(rect.left());
         ui->spinBox_Y1->setValue(rect.top());
         ui->spinBox_X2->setValue(rect.right());
@@ -424,6 +425,9 @@ void MainWindow::on_actionSave_triggered()
     if(name.isEmpty() || name.isNull()){
         return;
     }
+    if(!name.endsWith(".txt")){
+        name += ".txt";
+    }
     QFile file(name);
     if (file.open(QFile::WriteOnly)) {
         QTextStream str(&file);
@@ -538,7 +542,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.1\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.3\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!
@@ -587,7 +591,7 @@ void MainWindow::on_actionCapture_Device_triggered()
             imageProcessor->setBounds(ui->imagearea->getBounds());
             ui->imagearea->setEnabled(true);
             ui->imagearea->clearContours();
-            ui->imagearea->update();
+            //ui->imagearea->update();
             if(dialog.isRecord()){
                 streamProcessor->setRecord(true);  
                 streamProcessor->setFilename(dialog.getFileName());
@@ -614,4 +618,16 @@ QStringList MainWindow::countCameras()
         }
     }
     return list;
+}
+
+void MainWindow::on_actionSnapshot_triggered()
+{
+    if(isRunning){
+        QImage im = ImageStorage::getInstance().getImage();
+        QString name = QFileDialog::getSaveFileName(this, "Save snapshot", ".", "Image files (*.bmp)");
+        if(!name.endsWith(".bmp")){
+            name += ".bmp";
+        }
+        im.save(name);
+    }
 }

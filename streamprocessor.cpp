@@ -33,7 +33,7 @@ void StreamProcessor::run()
     try{
         capture.isOpened();
         
-        int fps = 25;//capture.get(CV_CAP_PROP_FPS); 
+        int fps = 25; 
                 
         cv::Mat frame;
         

@@ -20,6 +20,9 @@ public:
     int getFps();
     bool isRecord();
     
+private slots:
+    void on_pushButton_clicked();
+    
 private:
     Ui::CaptureDialog *ui;
 };

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>799</width>
-    <height>497</height>
+    <height>504</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -383,6 +383,7 @@
    <addaction name="actionOpen"/>
    <addaction name="actionOpen_Video"/>
    <addaction name="actionCapture_Device"/>
+   <addaction name="actionSnapshot"/>
    <addaction name="actionSave"/>
    <addaction name="separator"/>
    <addaction name="actionRun"/>
@@ -550,6 +551,15 @@
     <string>Ctrl+C</string>
    </property>
   </action>
+  <action name="actionSnapshot">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/1421304420_camera.svg</normaloff>:/1421304420_camera.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Snapshot</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -581,12 +591,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>181</x>
-     <y>397</y>
+     <x>202</x>
+     <y>458</y>
     </hint>
     <hint type="destinationlabel">
-     <x>645</x>
-     <y>408</y>
+     <x>715</x>
+     <y>460</y>
     </hint>
    </hints>
   </connection>
@@ -597,12 +607,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>645</x>
-     <y>408</y>
+     <x>715</x>
+     <y>460</y>
     </hint>
     <hint type="destinationlabel">
-     <x>403</x>
-     <y>403</y>
+     <x>424</x>
+     <y>458</y>
     </hint>
    </hints>
   </connection>

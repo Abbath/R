@@ -78,12 +78,14 @@ private slots:
     
     void on_actionSnapshot_triggered();
     
+    void on_groupBox_4_toggled(bool arg1);
+    
 signals:
     void stop();
 
 private:
-    QSpinBox* sens;
-    QDoubleSpinBox* period;
+//    QSpinBox* sens;
+//    QDoubleSpinBox* period;
     QVector<int> lightPixelsNumbers;
     QVector<double> lightPixelsMeans;
     unsigned fps;

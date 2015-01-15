@@ -20,19 +20,9 @@ MainWindow::MainWindow(QWidget* parent)
     
     this->showMaximized();
     
-    ui->groupBox->hide();
     ui->progressBar->hide();
     ui->label_8->hide();
     ui->imagearea->setDisabled(true);
-    sens = new QSpinBox(this);
-    ui->mainToolBar->addWidget(new QLabel("Sens.", this));
-    ui->mainToolBar->addWidget(sens);
-    sens->setValue(60);
-    period = new QDoubleSpinBox(this);
-    ui->mainToolBar->addWidget(new QLabel("Period",this));
-    ui->mainToolBar->addWidget(period);
-    period->setMinimum(0.1);
-    period->setValue(1.0);
     
     initPlot(ui->l_plot, lightsNumbersPlot, QString("Lights"), QString("Time [s]"), QString("Points"));
     initPlot(ui->m_plot, lightsMeansPlot, QString("Lights mean"), QString("Time [s]"), QString("Mean"));
@@ -59,8 +49,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(videoProcessor, SIGNAL(progress(int)), this, SLOT(progress(int)));
     connect(videoProcessor, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(videoProcessor, SIGNAL(detection()), this, SLOT(detection()));
-    connect(sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
-    connect(period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
+    connect(ui->sens, SIGNAL(valueChanged(int)), this, SLOT(sensChanged(int)));
+    connect(ui->period, SIGNAL(valueChanged(double)), this, SLOT(periodChanged(double)));
     connect(imageProcessor, SIGNAL(histogram(QImage)), this, SLOT(histogram(QImage)));
     connect(streamProcessor, SIGNAL(time(double)), this, SLOT(time(double)));
     connect(streamProcessor, SIGNAL(displayResults(std::shared_ptr<Results>)), this, SLOT(plotResults(std::shared_ptr<Results>)));
@@ -101,8 +91,8 @@ void MainWindow::writeSettings()
     settings.beginGroup("MW");
     settings.setValue("threshold", ui->spinBox->value());
     settings.setValue("ad", ui->actionAutodetection->isChecked());
-    settings.setValue("sens", sens->value());
-    settings.setValue("period", period->value());
+    settings.setValue("sens", ui->sens->value());
+    settings.setValue("period", ui->period->value());
     settings.setValue("bounds", ui->imagearea->getBounds());
     settings.setValue("X1", ui->spinBox_X1->value());
     settings.setValue("X2", ui->spinBox_X2->value());
@@ -119,13 +109,17 @@ void MainWindow::readSettings()
     QSettings settings("CAD", "R");
     ui->spinBox->setValue(settings.value("MW/threshold").toInt());
     ui->actionAutodetection->setChecked(settings.value("MW/ad").toBool());
-    sens->setValue(settings.value("MW/sens").toUInt());
-    period->setValue(settings.value("MW/period").toDouble());
+    ui->sens->setValue(settings.value("MW/sens").toUInt());
+    ui->period->setValue(settings.value("MW/period").toDouble());
     setBounds(settings.value("MW/bounds").toRect());
     ui->imagearea->setBounds(settings.value("MW/bounds").toRect());
+    ui->spinBox_X1->setMaximum(settings.value("MW/X1").toInt());
     ui->spinBox_X1->setValue(settings.value("MW/X1").toInt());
+    ui->spinBox_X2->setMaximum(settings.value("MW/X2").toInt());
     ui->spinBox_X2->setValue(settings.value("MW/X2").toInt());
+    ui->spinBox_Y1->setMaximum(settings.value("MW/Y1").toInt());
     ui->spinBox_Y1->setValue(settings.value("MW/Y1").toInt());
+    ui->spinBox_Y2->setMaximum(settings.value("MW/Y2").toInt());    
     ui->spinBox_Y2->setValue(settings.value("MW/Y2").toInt());
 }
 
@@ -318,7 +312,7 @@ void MainWindow::openVideo()
         auto videoLength = frameNumber / double(fps);
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
-        period->setMaximum(videoLength);
+        ui->period->setMaximum(videoLength);
         videoProcessor->setFilename(videoFileName);
         cv::Mat frame;
         capture.read(frame);
@@ -528,6 +522,9 @@ void MainWindow::detection()
  */
 void MainWindow::on_actionAutodetection_triggered(bool checked)
 {
+    if(checked){
+        
+    }
     videoProcessor->setAd(checked);
 }
 
@@ -542,7 +539,7 @@ void MainWindow::on_actionAbout_triggered()
 #elif defined(_MSC_VER)
     cv = "MSVC " + QString::number(_MSC_FULL_VER);
 #endif
-    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.3\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
+    QMessageBox::about(this,"About", "Lab-on-a-chip light analyser. © 2013-2015\nVersion 2.4.4\nQt version: " + QString(QT_VERSION_STR) + "\nCompiler Version: " + cv);
 }
 
 /*!
@@ -630,4 +627,9 @@ void MainWindow::on_actionSnapshot_triggered()
         }
         im.save(name);
     }
+}
+
+void MainWindow::on_groupBox_4_toggled(bool arg1)
+{
+    videoProcessor->setAd(arg1);
 }

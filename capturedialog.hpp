@@ -20,6 +20,7 @@ public:
     int getFps();
     bool isRecord();
     
+    void testSetItems();
 private slots:
     void on_pushButton_clicked();
     

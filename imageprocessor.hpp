@@ -6,7 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <QObject>
 #include <QtGui>
-#include "imageconverter.hpp"
+#include "utils.hpp"
 
 /*!
  * \brief The ImageProcessor class
@@ -28,6 +28,8 @@ public:
     QSize getH_size() const;
     void setH_size(const QSize &value);
     
+    void testProcessRealData();
+    void testProcessMarginal();
 signals:
     void frameChanged(QImage image, Contours contours);
     void histogram(QImage hist);

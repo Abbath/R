@@ -8,10 +8,10 @@
 #include "imagearea.hpp"
 #include "videoprocessor.hpp"
 #include "streamprocessor.hpp"
-#include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "capturewrapper.hpp"
 #include "imagestorage.hpp"
+#include "utils.hpp"
 #include <qwt_plot.h>
 #include <qwt.h>
 #include <qwt_plot_curve.h>

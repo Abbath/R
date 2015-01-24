@@ -93,8 +93,8 @@ void ImageArea::mousePressEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
         rectnotdrawing = false;
-        setX1(std::max(0, e->x()));
-        setY1(std::max(0, e->y()));
+        setX1(e->x());
+        setY1(e->y());
         setX1(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
         setY1(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
     }
@@ -107,8 +107,8 @@ void ImageArea::mousePressEvent(QMouseEvent* e)
 void ImageArea::mouseReleaseEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
-        setX2(std::max(0, e->x()));
-        setY2(std::max(0, e->y()));
+        setX2(e->x());
+        setY2(e->y());
         setX2(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
         setY2(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
         rectnotdrawing = true;
@@ -124,8 +124,8 @@ void ImageArea::mouseReleaseEvent(QMouseEvent* e)
 void ImageArea::mouseMoveEvent(QMouseEvent* e)
 {
     if (e->buttons() & Qt::LeftButton) {
-        setX2(std::max(0, e->x()));
-        setY2(std::max(0, e->y()));
+        setX2(e->x());
+        setY2(e->y());
         setX2(std::min(e->x(), ImageStorage::getInstance().getImageWidth() - 1));
         setY2(std::min(e->y(), ImageStorage::getInstance().getImageHeight() - 1));
         update();

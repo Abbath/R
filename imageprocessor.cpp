@@ -7,6 +7,10 @@
 ImageProcessor::ImageProcessor(QObject *parent) :
     QObject(parent), lightThreshold(255)
 {
+#ifdef QT_DEBUG
+    testProcessMarginal();
+    testProcessRealData();
+#endif
 }
 
 /*!
@@ -20,7 +24,14 @@ QPair<int, double> ImageProcessor::process(QImage _image)
     if(_image.isNull()){
         return qMakePair(0, 0.0l);
     }
-    cv::Mat m = ImageConverter::QImage2Mat(_image);
+    if(bounds.right() >= _image.width()){
+        bounds.setRight(_image.width() - 1);
+    }
+    if(bounds.bottom() >= _image.height()){
+        bounds.setBottom(_image.height()-1);
+    }
+    
+    cv::Mat m = Utils::Image::QImage2Mat(_image);
     return process(m);
 }
 
@@ -66,12 +77,12 @@ QPair<int, double> ImageProcessor::process(cv::Mat &m)
         lightMean = 0;
     }
     
-    lightMean = std::max(lightMean, double(lightThreshold));
+    //lightMean = std::max(lightMean, double(lightThreshold));
     
     cv::Mat im = hist(matCopy(rec));
         
-    emit frameChanged(ImageConverter::Mat2QImage(matCopy), contours);
-    emit histogram(ImageConverter::Mat2QImage(im)); 
+    emit frameChanged(Utils::Image::Mat2QImage(matCopy), contours);
+    emit histogram(Utils::Image::Mat2QImage(im)); 
     
     QPair<int, double> result(lightArea, lightMean);
     
@@ -169,3 +180,51 @@ cv::Mat ImageProcessor::hist(cv::Mat im)
     return histImage;
 }
 
+
+void ImageProcessor::testProcessMarginal(){
+    QImage image(400, 400, QImage::Format_ARGB32);
+    image.fill(Qt::black);
+    bounds = QRect(100, 200, 100, 200);
+    lightThreshold = 128;
+    h_size = image.size();
+    auto test_res = process(image);
+    Q_ASSERT_X(test_res.first == 0 && abs(test_res.second) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 1");
+    
+    lightThreshold = 0;
+    auto test_res1 = process(image);
+    Q_ASSERT_X(test_res1.first == 19109 && abs(test_res1.second) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 2");
+    
+    lightThreshold = 255;
+    auto test_res2 = process(image);
+    Q_ASSERT_X(test_res2.first == 0 && abs(test_res2.second) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 3");
+    
+    image.fill(Qt::white);
+    
+    lightThreshold = 128;
+    auto test_res3 = process(image);
+    Q_ASSERT_X(test_res3.first == 19109 && abs(test_res3.second - 255.0) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 4");
+    
+    lightThreshold = 0;
+    auto test_res4 = process(image);
+    Q_ASSERT_X(test_res4.first == 19109 && abs(test_res4.second - 255.0) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 5");
+    
+    lightThreshold = 255;
+    auto test_res5 = process(image);
+    Q_ASSERT_X(test_res5.first == 19109 && abs(test_res5.second - 255.0) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 6");
+    
+    lightThreshold = 128;
+    bounds = QRect(0,0,500,500);
+    auto test_res6 = process(image);
+    //qDebug() << test_res6.first << " " << test_res6.second;
+    Q_ASSERT_X(test_res6.first == 157609 && abs(test_res6.second - 255.0) < std::numeric_limits<double>::epsilon(), "ImageProcessor::testProcessMarginal", "Processing works wrong 7");
+    
+}
+
+void ImageProcessor::testProcessRealData(){
+    QImage image("4.bmp");
+    bounds = QRect(100, 200, 100, 200);
+    lightThreshold = 128;
+    h_size = image.size();
+    auto test_res = process(image);
+    Q_ASSERT_X(test_res.first == 286 && abs(test_res.second - 150.402) < 0.01, "ImageProcessor::testProcess", "Processing works wrong");
+}

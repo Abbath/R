@@ -11,7 +11,6 @@
 #include <iostream>
 #include <memory>
 #include "results.hpp"
-#include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "lightdetector.hpp"
 #include "capturewrapper.hpp"

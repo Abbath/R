@@ -10,11 +10,11 @@
 #include <iostream>
 #include <memory>
 #include "results.hpp"
-#include "imageconverter.hpp"
 #include "imageprocessor.hpp"
 #include "lightdetector.hpp"
 #include "capturewrapper.hpp"
 #include "imagestorage.hpp"
+#include "utils.hpp"
 
 /*!
  * \brief The Processor class

@@ -18,27 +18,27 @@ SOURCES += main.cpp\
 #    mainwidget.cpp \
     imagearea.cpp \
     results.cpp \
-    imageconverter.cpp \
     imageprocessor.cpp \
     lightdetector.cpp \
     capturewrapper.cpp \
     videoprocessor.cpp \
     imagestorage.cpp \
     streamprocessor.cpp \
-    capturedialog.cpp
+    capturedialog.cpp \
+    utils.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
     imagearea.hpp \
     results.hpp \
-    imageconverter.hpp \
     imageprocessor.hpp \
     lightdetector.hpp \
     capturewrapper.hpp \
     videoprocessor.hpp \
     imagestorage.hpp \
     streamprocessor.hpp \
-    capturedialog.hpp
+    capturedialog.hpp \
+    utils.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui \

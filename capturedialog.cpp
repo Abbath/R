@@ -7,6 +7,7 @@ CaptureDialog::CaptureDialog(QWidget *parent) :
     ui(new Ui::CaptureDialog)
 {
     ui->setupUi(this);
+    testSetItems();
 }
 
 CaptureDialog::~CaptureDialog()
@@ -54,4 +55,12 @@ void CaptureDialog::on_pushButton_clicked()
         name += ".avi";
     }
     ui->fileName->setText(name);
+}
+
+void CaptureDialog::testSetItems(){
+    QStringList sl;
+    sl << "0" << "1";
+    this->setItems(sl);
+    Q_ASSERT_X(ui->deviceNum->count() == 2, "CaptureDialog.cpp", "Items are not inserted");
+    ui->deviceNum->clear();
 }

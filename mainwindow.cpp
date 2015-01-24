@@ -79,7 +79,6 @@ void MainWindow::initPlot(QwtPlot* plot, QwtToolSet &toolset, QString title, QSt
     toolset.curve.setRenderHint(QwtPlotItem::RenderAntialiased);
     toolset.curve.setPen(QPen(Qt::red));
     toolset.curve.attach(plot);
-    Q_UNUSED(toolset);
 }
 
 /*!
@@ -308,7 +307,7 @@ void MainWindow::openVideo()
     try{
         capture.isOpened();
         auto frameNumber = capture.get(CV_CAP_PROP_FRAME_COUNT);
-        fps = capture.get(CV_CAP_PROP_FPS);
+        fps = Utils::Video::getAVIFPS(videoFileName.toStdString());
         auto videoLength = frameNumber / double(fps);
         ui->doubleSpinBox_2->setMaximum(videoLength);
         ui->doubleSpinBox_3->setMaximum(videoLength);
@@ -316,7 +315,7 @@ void MainWindow::openVideo()
         videoProcessor->setFilename(videoFileName);
         cv::Mat frame;
         capture.read(frame);
-        QImage image = ImageConverter::Mat2QImage(frame);
+        QImage image = Utils::Image::Mat2QImage(frame);
         ui->spinBox_X1->setMaximum(image.width());
         ui->spinBox_Y1->setMaximum(image.height());
         ui->spinBox_X2->setMaximum(image.width());
@@ -574,7 +573,7 @@ void MainWindow::on_actionCapture_Device_triggered()
                 capture.read(frame);
                 cv::Mat grayFrame;
                 cv::cvtColor(frame, grayFrame, CV_BGR2GRAY, 1);
-                QImage image = ImageConverter::Mat2QImage(grayFrame);
+                QImage image = Utils::Image::Mat2QImage(grayFrame);
                 ui->spinBox_X1->setMaximum(image.width());
                 ui->spinBox_Y1->setMaximum(image.height());
                 ui->spinBox_X2->setMaximum(image.width());

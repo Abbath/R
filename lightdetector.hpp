@@ -11,6 +11,7 @@
 #include <opencv2/core/core.hpp>
 #include <QMessageBox>
 #include "capturewrapper.hpp"
+#include "utils.hpp"
 
 /*!
  * \brief The LightDetector class

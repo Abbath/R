@@ -2,7 +2,6 @@
 #include "ui_imagearea.h"
 
 #include <QMessageBox>
-#include "imageconverter.hpp"
 
 /*!
  * \brief ImageArea::ImageArea

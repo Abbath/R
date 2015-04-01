@@ -14,8 +14,8 @@ namespace Utils{
         int getAVIFPS(std::string filename);
     }
     namespace Image {
-    cv::Mat QImage2Mat(QImage &src);
-    QImage Mat2QImage(const cv::Mat &src);
+        cv::Mat QImage2Mat(QImage &src);
+        QImage Mat2QImage(const cv::Mat &src);
     }
 }
 #endif // UTILS_HPP

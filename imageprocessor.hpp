@@ -32,7 +32,7 @@ public:
     void testProcessMarginal();
 signals:
     void frameChanged(QImage image, Contours contours);
-    void histogram(QImage hist);
+    void histogram(QImage hist, int w, double coef);
 public slots:
     
 private:
@@ -40,7 +40,7 @@ private:
     QRect bounds;
     QSize h_size;
     double mean(cv::Mat image, Contour contour);
-    cv::Mat hist(cv::Mat im);
+    cv::Mat hist(cv::Mat im, const Contours &contours, const std::vector<cv::Vec4i>& h);
 };
 
 #endif // IMAGEPROCESSOR_HPP

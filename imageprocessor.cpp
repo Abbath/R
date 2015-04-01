@@ -79,10 +79,9 @@ QPair<int, double> ImageProcessor::process(cv::Mat &m)
     
     //lightMean = std::max(lightMean, double(lightThreshold));
     
-    cv::Mat im = hist(matCopy(rec));
-        
+    hist(matCopy(rec), contours, h);
+    
     emit frameChanged(Utils::Image::Mat2QImage(matCopy), contours);
-    emit histogram(Utils::Image::Mat2QImage(im)); 
     
     QPair<int, double> result(lightArea, lightMean);
     
@@ -153,29 +152,60 @@ double ImageProcessor::mean(cv::Mat image, Contour contour)
  * \param im
  * \return 
  */
-cv::Mat ImageProcessor::hist(cv::Mat im)
+cv::Mat ImageProcessor::hist(cv::Mat im, const Contours& contours, const std::vector<cv::Vec4i> &h)
 {
     int histSize = 256;
     float range[] = {0, 256};
     const float* histRange = { range };
     
     cv::Mat hist;
+    cv::Mat crop;
     
-    cv::calcHist(&im, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
-       
+    if(contours.size() > 0){
+        cv::Rect roi(cv::boundingRect(contours[0]));
+        
+        for(int i = 1 ; i < contours.size(); ++i){
+            if(h[i][3] < 0 ){
+                roi = roi | cv::boundingRect(contours[i]);
+            }
+        }
+        
+        if(0 <= roi.x && 0 <= roi.width && roi.x + roi.width <= im.cols && 0 <= roi.y && 0 <= roi.height && roi.y + roi.height <= im.rows){
+            crop = cv::Mat(im, roi);
+        }else{
+            crop = cv::Mat(im);
+        }
+        cv::Mat mask(cv::Mat::zeros(crop.rows, crop.cols, CV_8UC1));
+        cv::drawContours(mask, contours, -1, cv::Scalar(255), CV_FILLED, CV_AA, cv::noArray(), 1, -roi.tl());
+        
+        cv::calcHist(&crop, 1, 0, mask, hist, 1, &histSize, &histRange, true, false);
+    }    else{
+        cv::calcHist(&im, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+    }
+    
     int hist_w = h_size.width(); int hist_h = h_size.height();
     int bin_w = cvRound( (double) hist_w/histSize );
     
     cv::Mat histImage( hist_h, hist_w, CV_8UC3, cv::Scalar( 0,0,0) );
     
     cv::normalize(hist, hist, 0, histImage.rows, cv::NORM_MINMAX, -1, cv::Mat() );
-    
-    for( int i = 0; i < histSize; i++ )
-    {
-        cv::line( histImage, cv::Point( bin_w*(i), hist_h /*- cvRound(hist.at<float>(i-1))*/ ) ,
-              cv::Point( bin_w*(i), hist_h - cvRound(hist.at<float>(i)) ),
-              cv::Scalar( 0, 255, 0), 1, 8, 0  );
+    int max = 0; 
+    double sum = 0.0;
+    if(contours.size() > 0){
+        for( int i = 0; i < histSize-1; i++ )
+        {
+            max = std::max(max, cvRound(hist.at<float>(i)));
+            sum += hist.at<float>(i);
+//            cv::line( histImage, cv::Point( bin_w*(i), hist_h /*- cvRound(hist.at<float>(i-1))*/ ) ,
+//                      cv::Point( bin_w*(i), hist_h - cvRound(hist.at<float>(i)) ),
+//                      cv::Scalar( i, i, i), 1, 8, 0  );
+            cv::line( histImage, cv::Point( bin_w*(i), hist_h - cvRound(hist.at<float>(i)) ) ,
+                      cv::Point( bin_w*(i+1), hist_h - cvRound(hist.at<float>(i+1)) ),
+                      cv::Scalar( 0, 255, 0), 1, 8, 0  );
+        }
     }
+    
+    emit histogram(Utils::Image::Mat2QImage(histImage), bin_w*255, max/sum); 
     
     return histImage;
 }

@@ -302,7 +302,7 @@
        <enum>QTabWidget::West</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -330,11 +330,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
+         <widget class="HistogramArea" name="widget" native="true"/>
         </item>
        </layout>
       </widget>
@@ -375,7 +371,7 @@
        </size>
       </property>
       <property name="title">
-       <string>Bounds</string>
+       <string>Boundaries</string>
       </property>
       <layout class="QFormLayout" name="formLayout_2">
        <item row="0" column="0">
@@ -679,6 +675,12 @@
    <class>QwtPlot</class>
    <extends>QWidget</extends>
    <header>qwt_plot.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>HistogramArea</class>
+   <extends>QWidget</extends>
+   <header>histogramarea.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

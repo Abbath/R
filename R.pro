@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     imagestorage.cpp \
     streamprocessor.cpp \
     capturedialog.cpp \
-    utils.cpp
+    utils.cpp \
+    histogramarea.cpp
 
 HEADERS  += mainwindow.hpp \
 #    mainwidget.hpp \
@@ -38,11 +39,13 @@ HEADERS  += mainwindow.hpp \
     imagestorage.hpp \
     streamprocessor.hpp \
     capturedialog.hpp \
-    utils.hpp
+    utils.hpp \
+    histogramarea.hpp
 
 FORMS    += mainwindow.ui \
     imagearea.ui \
-    capturedialog.ui
+    capturedialog.ui \
+    histogramarea.ui
 
 unix{
 LIBS += -lopencv_core -lopencv_highgui -lopencv_imgproc -L"/usr/local/qwt-6.1.0/lib" -lqwt
